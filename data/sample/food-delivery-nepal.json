@@ -1,0 +1,27 @@
+{
+  "topic": "food delivery market in Nepal",
+  "keywords": ["food delivery", "nepal", "foodmandu", "pathao"],
+  "notice": "SAMPLE DATA: illustrative, hand-written entries for offline demos. Not verified research.",
+  "results": [
+    {
+      "title": "Sample: Foodmandu company profile",
+      "url": null,
+      "content": "Foodmandu is one of the earliest online food delivery platforms in Nepal, operating mainly in the Kathmandu Valley."
+    },
+    {
+      "title": "Sample: Pathao Nepal services overview",
+      "url": null,
+      "content": "Pathao, a ride-hailing company, offers food delivery in Nepal alongside rides and parcel delivery, competing on rider network size."
+    },
+    {
+      "title": "Sample: Urban demand notes",
+      "url": null,
+      "content": "Demand for food delivery in Nepal is concentrated in Kathmandu, Lalitpur and Bhaktapur, with smaller activity in Pokhara."
+    },
+    {
+      "title": "Sample: Payments notes",
+      "url": null,
+      "content": "Digital wallets such as eSewa and Khalti are commonly used alongside cash on delivery for online orders in Nepal."
+    }
+  ]
+}
