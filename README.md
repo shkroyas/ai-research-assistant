@@ -1,5 +1,190 @@
 # AI Research Assistant
 
-A multi-agent market research app. Enter a company or industry, and four agents (Orchestrator, Researcher, Analyst, Critic) produce a short, sourced research brief.
+A multi-agent market research app. Type a company or an industry, for example *"Analyze the food delivery market in Nepal"*, and four agents work in sequence to produce a short, sourced research brief:
 
-> Work in progress. Setup and run instructions will be added as the app is built.
+| Agent | Job |
+| --- | --- |
+| **Orchestrator** | Receives the query, runs the workflow, enforces the one-revision limit |
+| **Researcher** | Searches the web (Tavily) or, without a key, uses clearly labelled sample data |
+| **Analyst** | Writes the brief using only the numbered findings, citing each claim as `[F1]`, `[F2]` |
+| **Critic** | Checks evidence and coverage, approves or requests at most one revision |
+
+The brief contains a **summary**, **up to two competitors**, **key observations**, and **sources plus missing information**.
+
+**Author:** Royas Shakya ([@shkroyas](https://github.com/shkroyas))
+
+---
+
+## Contents
+
+- [How it works](#how-it-works)
+- [What you need](#what-you-need)
+- [Run it locally](#run-it-locally)
+- [Configuration](#configuration)
+- [Setting up Amazon Bedrock](#setting-up-amazon-bedrock)
+- [Tests and code quality](#tests-and-code-quality)
+- [Project structure](#project-structure)
+- [Design decisions](#design-decisions)
+- [Limitations](#limitations)
+
+---
+
+## How it works
+
+```mermaid
+flowchart LR
+    UI[Streamlit UI] --> O[Orchestrator]
+    O --> R[Researcher]
+    R --> A[Analyst]
+    A --> C{Critic}
+    C -- approved --> B[Final brief + agent trace]
+    C -- "revision request (max 1)" --> A
+    R -. Tavily or sample data .- S[(Search)]
+```
+
+Every handoff passes a single Pydantic object, `ResearchState`, holding the query, findings, draft brief, critique and an agent trace. Each agent validates what it receives and what the model returns, so malformed output is caught at the boundary instead of reaching the user.
+
+**Evidence first.** The Researcher numbers every finding (`F1`, `F2`, ...). The Analyst may only cite those ids. Plain code (`grounding.py`) then flags uncited observations, invented citations and competitors with no supporting finding, and the Critic sees those flags.
+
+**Choose your model.** A picker in the sidebar switches between **Claude on Amazon Bedrock** and **Groq**. Groq appears only when at least one Groq key is configured.
+
+**Key rotation for Groq.** Several Groq keys can be configured. On HTTP 429 (too many requests) the client switches to the next key at once, and only when every key is rate limited does it wait with back-off, honouring `retry-after`. On HTTP 401 or 403 (invalid or forbidden key) that key is disabled for the session and the next key is used, with no waiting.
+
+---
+
+## What you need
+
+| Requirement | Needed? | Where to get it |
+| --- | --- | --- |
+| Python 3.11 or newer | Yes | [python.org](https://www.python.org/downloads/) |
+| A model provider: AWS Bedrock (Claude) and/or Groq | At least one | See below |
+| AWS account with Bedrock access to Claude | For Claude | [AWS console](https://console.aws.amazon.com/bedrock/) |
+| Groq API key(s) | For Groq, free tier | [console.groq.com/keys](https://console.groq.com/keys) |
+| Tavily API key | Optional, for live web search | [app.tavily.com](https://app.tavily.com) (free tier) |
+| [uv](https://docs.astral.sh/uv/) | Optional, faster installs | `pip install uv` |
+
+No GPU is required. All model calls go to hosted APIs.
+
+Without a Tavily key the Researcher falls back to a small, clearly labelled sample dataset, so the app still runs end to end.
+
+---
+
+## Run it locally
+
+```bash
+# 1. Clone
+git clone https://github.com/shkroyas/ai-research-assistant.git
+cd ai-research-assistant
+
+# 2. Configure
+cp .env.example .env
+#    then edit .env and add your keys (see Configuration)
+
+# 3a. Install and run with uv (recommended)
+uv sync
+uv run streamlit run app/streamlit_app.py
+
+# 3b. Or with plain pip
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -e .
+streamlit run app/streamlit_app.py
+```
+
+Open http://localhost:8501, pick a model in the sidebar, type a company or industry, and click **Run research**.
+
+---
+
+## Configuration
+
+All settings are environment variables, read from `.env`. See [`.env.example`](.env.example) for the full list.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `LLM_PROVIDERS` | `bedrock,groq` | Models offered in the picker; the first is selected by default |
+| `AWS_REGION` | `us-east-1` | Region where Bedrock model access is enabled |
+| `AWS_PROFILE` | unset | Named AWS CLI profile, if you use one |
+| `BEDROCK_MODEL_ID` | `anthropic.claude-opus-4-6-v1` | Claude model id on Bedrock, copied from the console |
+| `BEDROCK_API` | `invoke` | `invoke` (InvokeModel, works with Claude Opus 4.6) or `mantle` (Claude 4.7 and later) |
+| `GROQ_API_KEYS` | unset | One or more Groq keys, comma separated |
+| `GROQ_MODEL` | `llama-3.3-70b-versatile` | Groq model |
+| `TAVILY_API_KEY` | unset | Enables live web search |
+| `MAX_SEARCH_RESULTS` | `5` | Results per search query |
+| `MAX_REVISIONS` | `1` | Critic revision limit (0 or 1) |
+
+Only using Groq? Set `LLM_PROVIDERS=groq`. Only Claude? Set `LLM_PROVIDERS=bedrock`.
+
+`.env` is git-ignored. Never commit real keys.
+
+---
+
+## Setting up Amazon Bedrock
+
+1. In the AWS console, open **Amazon Bedrock → Model access** in your chosen region and enable the Claude model you want to use.
+2. Create an IAM user or role with permission to invoke Bedrock models (for example the `AmazonBedrockLimitedAccess` managed policy, or a policy allowing `bedrock:InvokeModel` on that model).
+3. Give the app credentials using any standard AWS method:
+   - `aws configure` (writes `~/.aws/credentials`), then optionally set `AWS_PROFILE`, or
+   - set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` in `.env`.
+4. Set `AWS_REGION` and `BEDROCK_MODEL_ID` in `.env` to match what you enabled. Copy the id exactly as the Bedrock console shows it; in some regions this is a cross-region inference profile id starting with `us.`.
+5. Keep `BEDROCK_API=invoke` for Claude Opus 4.6. Claude 4.7 and later models can also use `BEDROCK_API=mantle`.
+
+> The project pins the `anthropic` SDK to 1.x. SDK 2.x sends a newer API version that Bedrock accepts only for Claude 4.7 and later, so 1.x keeps Claude Opus 4.6 working.
+
+---
+
+## Tests and code quality
+
+The test suite runs fully offline: a `FakeLLM` returns scripted responses and search uses sample data, so no API keys or network are needed.
+
+```bash
+make test     # pytest with coverage
+make lint     # ruff lint and format check
+make format   # auto-fix lint issues and format
+```
+
+GitHub Actions runs lint and the full test suite on every pull request and on every push to `main`.
+
+---
+
+## Project structure
+
+```text
+ai-research-assistant/
+├── app/streamlit_app.py          # UI: input, progress, brief, agent trace
+├── src/market_research/
+│   ├── config.py                 # settings from environment variables
+│   ├── models.py                 # Pydantic contracts passed between agents
+│   ├── llm.py                    # Bedrock Claude, Groq with key rotation, FakeLLM
+│   ├── search.py                 # Tavily search and labelled sample data
+│   ├── grounding.py              # citation checks in plain code
+│   └── agents/                   # orchestrator, researcher, analyst, critic
+├── data/sample/                  # labelled sample data for offline demos
+├── samples/                      # example output brief
+├── tests/                        # offline unit and integration tests
+├── .github/workflows/ci.yml      # lint and tests on every PR
+├── .env.example                  # configuration template, no secrets
+└── pyproject.toml
+```
+
+---
+
+## Design decisions
+
+- **No agent framework.** Four small agent classes and an orchestrator loop are easier to read, test and debug than a framework for a fixed four-step pipeline. Each agent shares the same `run(state) -> state` interface, so a framework such as LangGraph could be introduced later without rewriting the agents.
+- **Code checks what code can.** The revision limit, the two-competitor cap and citation validity are enforced in Python, not left to the model.
+- **Honest data labelling.** Sample data is marked in the data model, in the UI and in the exported brief. Missing information is listed rather than guessed.
+- **Provider independence.** Agents depend only on a one-method `LLMClient` interface, so new providers can be added without touching the agents.
+
+---
+
+## Limitations
+
+- Brief quality depends on what web search returns; niche or very local topics may have thin coverage, which the brief reports under *Missing information*.
+- The sample dataset is small and illustrative, intended only for offline demos.
+- Briefs are drafts for a person to review, not verified research.
+
+---
+
+## License
+
+[MIT](LICENSE) © 2026 Royas Shakya
