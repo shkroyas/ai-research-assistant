@@ -9,6 +9,7 @@ dependencies = [
     "streamlit>=1.40",
     "pydantic>=2.8",
     "pydantic-settings>=2.4",
+    "tavily-python>=0.5",
 ]
 
 [dependency-groups]
