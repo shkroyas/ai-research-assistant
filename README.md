@@ -46,7 +46,9 @@ Every handoff passes a single Pydantic object, `ResearchState`, holding the quer
 
 **Evidence first.** The Researcher numbers every finding (`F1`, `F2`, ...). The Analyst may only cite those ids. Plain code (`grounding.py`) then flags uncited observations, invented citations and competitors with no supporting finding, and the Critic sees those flags.
 
-**Resilient model access.** The app tries LLM providers in order (by default Claude on Amazon Bedrock, then Groq). The Groq client rotates through several API keys when one is rate limited (HTTP 429), and waits with back-off, honouring `retry-after`, when all of them are.
+**Choose your model.** A picker in the sidebar switches between **Claude on Amazon Bedrock** and **Groq**. Groq appears only when at least one Groq key is configured.
+
+**Key rotation for Groq.** Several Groq keys can be configured. On HTTP 429 (too many requests) the client switches to the next key at once, and only when every key is rate limited does it wait with back-off, honouring `retry-after`. On HTTP 401 or 403 (invalid or forbidden key) that key is disabled for the session and the next key is used, with no waiting.
 
 ---
 
@@ -55,9 +57,9 @@ Every handoff passes a single Pydantic object, `ResearchState`, holding the quer
 | Requirement | Needed? | Where to get it |
 | --- | --- | --- |
 | Python 3.11 or newer | Yes | [python.org](https://www.python.org/downloads/) |
-| An LLM provider: AWS Bedrock **or** Groq | At least one | See below |
-| AWS account with Bedrock access to Claude | Recommended | [AWS console](https://console.aws.amazon.com/bedrock/) |
-| Groq API key(s) | Optional fallback, free tier | [console.groq.com/keys](https://console.groq.com/keys) |
+| A model provider: AWS Bedrock (Claude) and/or Groq | At least one | See below |
+| AWS account with Bedrock access to Claude | For Claude | [AWS console](https://console.aws.amazon.com/bedrock/) |
+| Groq API key(s) | For Groq, free tier | [console.groq.com/keys](https://console.groq.com/keys) |
 | Tavily API key | Optional, for live web search | [app.tavily.com](https://app.tavily.com) (free tier) |
 | [uv](https://docs.astral.sh/uv/) | Optional, faster installs | `pip install uv` |
 
@@ -89,7 +91,7 @@ pip install -e .
 streamlit run app/streamlit_app.py
 ```
 
-Open http://localhost:8501, type a company or industry, and click **Run research**.
+Open http://localhost:8501, pick a model in the sidebar, type a company or industry, and click **Run research**.
 
 ---
 
@@ -99,7 +101,7 @@ All settings are environment variables, read from `.env`. See [`.env.example`](.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `LLM_PROVIDERS` | `bedrock,groq` | Providers to try, in order |
+| `LLM_PROVIDERS` | `bedrock,groq` | Models offered in the picker; the first is selected by default |
 | `AWS_REGION` | `us-east-1` | Region where Bedrock model access is enabled |
 | `AWS_PROFILE` | unset | Named AWS CLI profile, if you use one |
 | `BEDROCK_MODEL_ID` | `anthropic.claude-opus-4-6-v1` | Claude model id on Bedrock, copied from the console |
@@ -110,7 +112,7 @@ All settings are environment variables, read from `.env`. See [`.env.example`](.
 | `MAX_SEARCH_RESULTS` | `5` | Results per search query |
 | `MAX_REVISIONS` | `1` | Critic revision limit (0 or 1) |
 
-Only using Groq? Set `LLM_PROVIDERS=groq`. Only Bedrock? Set `LLM_PROVIDERS=bedrock`.
+Only using Groq? Set `LLM_PROVIDERS=groq`. Only Claude? Set `LLM_PROVIDERS=bedrock`.
 
 `.env` is git-ignored. Never commit real keys.
 
@@ -152,7 +154,7 @@ ai-research-assistant/
 ├── src/market_research/
 │   ├── config.py                 # settings from environment variables
 │   ├── models.py                 # Pydantic contracts passed between agents
-│   ├── llm.py                    # Bedrock, Groq (key rotation), fallback chain, FakeLLM
+│   ├── llm.py                    # Bedrock Claude, Groq with key rotation, FakeLLM
 │   ├── search.py                 # Tavily search and labelled sample data
 │   ├── grounding.py              # citation checks in plain code
 │   └── agents/                   # orchestrator, researcher, analyst, critic
@@ -171,7 +173,7 @@ ai-research-assistant/
 - **No agent framework.** Four small agent classes and an orchestrator loop are easier to read, test and debug than a framework for a fixed four-step pipeline. Each agent shares the same `run(state) -> state` interface, so a framework such as LangGraph could be introduced later without rewriting the agents.
 - **Code checks what code can.** The revision limit, the two-competitor cap and citation validity are enforced in Python, not left to the model.
 - **Honest data labelling.** Sample data is marked in the data model, in the UI and in the exported brief. Missing information is listed rather than guessed.
-- **Provider independence.** Agents depend only on a one-method `LLMClient` interface, so providers can be added or reordered through configuration.
+- **Provider independence.** Agents depend only on a one-method `LLMClient` interface, so new providers can be added without touching the agents.
 
 ---
 
