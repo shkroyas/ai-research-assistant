@@ -10,7 +10,7 @@ dependencies = [
     "pydantic>=2.8",
     "pydantic-settings>=2.4",
     "tavily-python>=0.5",
-    "anthropic[bedrock]>=0.70",
+    "anthropic[bedrock]>=1.17,<2",
     "groq>=0.11",
 ]
 
