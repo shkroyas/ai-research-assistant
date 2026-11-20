@@ -7,10 +7,10 @@ from market_research.config import Settings
 from market_research.llm import (
     BedrockClaudeClient,
     FakeLLM,
-    FallbackLLM,
     GroqClient,
     KeyRotator,
     LLMError,
+    available_providers,
     build_llm,
     complete_json,
     extract_json,
@@ -23,6 +23,12 @@ class RateLimited(Exception):
     def __init__(self, retry_after: str | None = None) -> None:
         super().__init__("rate limited")
         self.response = SimpleNamespace(headers={"retry-after": retry_after} if retry_after else {})
+
+
+class KeyRejected(Exception):
+    def __init__(self, status_code: int) -> None:
+        super().__init__(f"HTTP {status_code}")
+        self.status_code = status_code
 
 
 class ScriptedGroq:
@@ -54,6 +60,9 @@ def test_key_rotator_cycles_and_rejects_empty() -> None:
     assert rotator.key == "a"
     assert rotator.rotate() == "b"
     assert rotator.rotate() == "a"
+    rotator.disable_current()
+    assert rotator.rotate() == "b"
+    assert rotator.rotate() == "b"  # "a" is skipped
     with pytest.raises(ValueError):
         KeyRotator(["", "  "])
 
@@ -87,6 +96,29 @@ def test_groq_non_rate_limit_error_is_not_retried() -> None:
         groq.complete("sys", "hi")
 
 
+@pytest.mark.parametrize("status", [401, 403])
+def test_groq_disables_rejected_key_and_rotates_without_waiting(status: int) -> None:
+    sleeps: list[float] = []
+    groq = make_groq({"k1": [KeyRejected(status)], "k2": ["ok", "again"]}, sleeps)
+    assert groq.complete("sys", "hi") == "ok"
+    assert groq.complete("sys", "hi") == "again"  # k1 is not tried again
+    assert sleeps == []
+    assert groq.rotator.disabled == {0}
+
+
+def test_groq_fails_clearly_when_every_key_is_rejected() -> None:
+    groq = make_groq({"k1": [KeyRejected(401)], "k2": [KeyRejected(403)]}, [])
+    with pytest.raises(LLMError, match="every API key was rejected"):
+        groq.complete("sys", "hi")
+
+
+def test_groq_mixed_rejected_and_rate_limited_keys() -> None:
+    sleeps: list[float] = []
+    groq = make_groq({"k1": [KeyRejected(401)], "k2": [RateLimited(), "ok"]}, sleeps)
+    assert groq.complete("sys", "hi") == "ok"
+    assert sleeps == [2.0]  # waited once, only for the rate limit
+
+
 def test_bedrock_client_joins_text_and_handles_refusal() -> None:
     def response(stop_reason: str, text: str) -> SimpleNamespace:
         return SimpleNamespace(
@@ -99,13 +131,6 @@ def test_bedrock_client_joins_text_and_handles_refusal() -> None:
     assert client.complete("sys", "hi") == "brief"
     with pytest.raises(LLMError, match="declined"):
         client.complete("sys", "hi")
-
-
-def test_fallback_uses_next_provider_when_first_fails() -> None:
-    chain = FallbackLLM([FakeLLM([]), FakeLLM(["from second"])])
-    assert chain.complete("sys", "hi") == "from second"
-    with pytest.raises(LLMError, match="All LLM providers failed"):
-        FallbackLLM([FakeLLM([])]).complete("sys", "hi")
 
 
 class Answer(BaseModel):
@@ -128,13 +153,28 @@ def test_complete_json_raises_after_attempts() -> None:
         complete_json(FakeLLM(["nope", "still nope"]), "sys", "p", Answer)
 
 
-def test_build_llm_skips_groq_without_keys() -> None:
+def test_groq_is_only_offered_with_keys() -> None:
+    without = Settings(_env_file=None, llm_providers="bedrock,groq", groq_api_keys=None)
+    assert available_providers(without) == ["bedrock"]
+    with_keys = Settings(_env_file=None, llm_providers="bedrock,groq", groq_api_keys="k1,k2")
+    assert available_providers(with_keys) == ["bedrock", "groq"]
+
+
+def test_build_llm_returns_the_chosen_provider() -> None:
+    settings = Settings(_env_file=None, llm_providers="bedrock,groq", groq_api_keys="k1, k2")
+    assert isinstance(build_llm(settings), BedrockClaudeClient)  # first is the default
+    groq = build_llm(settings, "groq")
+    assert isinstance(groq, GroqClient)
+    assert groq.rotator.keys == ["k1", "k2"]
+
+
+def test_build_llm_rejects_unconfigured_provider() -> None:
     settings = Settings(_env_file=None, llm_providers="groq", groq_api_keys=None)
     with pytest.raises(LLMError, match="No LLM provider"):
         build_llm(settings)
-    settings = Settings(_env_file=None, llm_providers="groq", groq_api_keys="k1, k2")
-    chain = build_llm(settings)
-    assert chain.name == "Groq llama-3.3-70b-versatile"
+    settings = Settings(_env_file=None, llm_providers="bedrock")
+    with pytest.raises(LLMError, match="not configured"):
+        build_llm(settings, "groq")
 
 
 def test_bedrock_client_rejects_unknown_api() -> None:
