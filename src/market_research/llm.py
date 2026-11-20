@@ -42,21 +42,37 @@ class LLMClient(Protocol):
 # ---------------------------------------------------------------------------
 
 
+BEDROCK_APIS = ("invoke", "mantle")
+
+
 class BedrockClaudeClient:
     """Claude on Amazon Bedrock. AWS credentials come from the usual AWS sources
-    (environment variables, ``~/.aws/credentials`` or an IAM role)."""
+    (environment variables, ``~/.aws/credentials`` or an IAM role).
+
+    ``api="invoke"`` uses Bedrock's InvokeModel endpoint (``bedrock-runtime``),
+    which serves Claude Opus 4.6 and earlier as well as newer models.
+    ``api="mantle"`` uses Bedrock's Messages-API endpoint for Claude 4.7 and later.
+    """
 
     def __init__(
         self,
         model_id: str,
         region: str,
         aws_profile: str | None = None,
+        api: str = "invoke",
         client: Any | None = None,
     ) -> None:
+        if api not in BEDROCK_APIS:
+            raise ValueError(f"Unknown Bedrock API {api!r}; use one of {BEDROCK_APIS}")
         if client is None:
-            from anthropic import AnthropicBedrockMantle
+            if api == "mantle":
+                from anthropic import AnthropicBedrockMantle
 
-            client = AnthropicBedrockMantle(aws_region=region, aws_profile=aws_profile)
+                client = AnthropicBedrockMantle(aws_region=region, aws_profile=aws_profile)
+            else:
+                from anthropic import AnthropicBedrock
+
+                client = AnthropicBedrock(aws_region=region, aws_profile=aws_profile)
         self._client = client
         self.model_id = model_id
         self.name = f"Bedrock {model_id}"
@@ -298,6 +314,7 @@ def build_llm(settings: Any) -> FallbackLLM:
                     model_id=settings.bedrock_model_id,
                     region=settings.aws_region,
                     aws_profile=settings.aws_profile,
+                    api=settings.bedrock_api,
                 )
             )
         elif provider == "groq" and settings.groq_key_list:

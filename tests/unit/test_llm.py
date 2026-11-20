@@ -135,3 +135,15 @@ def test_build_llm_skips_groq_without_keys() -> None:
     settings = Settings(_env_file=None, llm_providers="groq", groq_api_keys="k1, k2")
     chain = build_llm(settings)
     assert chain.name == "Groq llama-3.3-70b-versatile"
+
+
+def test_bedrock_client_rejects_unknown_api() -> None:
+    with pytest.raises(ValueError, match="Unknown Bedrock API"):
+        BedrockClaudeClient(model_id="m", region="us-east-1", api="converse")
+
+
+def test_bedrock_invoke_client_is_default_and_builds_offline() -> None:
+    from anthropic import AnthropicBedrock
+
+    client = BedrockClaudeClient(model_id="anthropic.claude-opus-4-6-v1", region="us-east-1")
+    assert isinstance(client._client, AnthropicBedrock)
