@@ -14,7 +14,7 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    # Order in which LLM providers are tried, comma separated.
+    # Providers offered in the app's model picker, comma separated; the first is the default.
     llm_providers: str = "bedrock,groq"
 
     # Amazon Bedrock (Claude). Credentials come from the standard AWS chain.

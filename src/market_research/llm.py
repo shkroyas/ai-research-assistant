@@ -3,16 +3,14 @@
 All agents talk to an ``LLMClient``: one method, ``complete(system, prompt)``,
 returning text. Concrete clients:
 
-* ``BedrockClaudeClient``: Claude through Amazon Bedrock (primary).
+* ``BedrockClaudeClient``: Claude through Amazon Bedrock.
 * ``GroqClient``: Groq's free tier, rotating across several API keys and
   backing off when every key is rate limited (HTTP 429).
-* ``FallbackLLM``: tries clients in order, e.g. Bedrock first, then Groq.
 * ``FakeLLM``: scripted responses for offline tests.
 """
 
 from __future__ import annotations
 
-import itertools
 import json
 import logging
 import re
@@ -102,27 +100,45 @@ class BedrockClaudeClient:
 
 
 class KeyRotator:
-    """Round-robin over several API keys."""
+    """Round-robin over several API keys, skipping keys marked as disabled."""
 
     def __init__(self, keys: Sequence[str]) -> None:
         cleaned = [k.strip() for k in keys if k and k.strip()]
         if not cleaned:
             raise ValueError("at least one API key is required")
         self.keys = cleaned
-        self._cycle = itertools.cycle(range(len(cleaned)))
-        self.current = next(self._cycle)
+        self.current = 0
+        self.disabled: set[int] = set()
 
     @property
     def key(self) -> str:
         return self.keys[self.current]
 
+    @property
+    def active_count(self) -> int:
+        return len(self.keys) - len(self.disabled)
+
     def rotate(self) -> str:
-        self.current = next(self._cycle)
+        """Move to the next key that is not disabled."""
+        if self.active_count == 0:
+            raise LLMError("all API keys are disabled")
+        for _ in range(len(self.keys)):
+            self.current = (self.current + 1) % len(self.keys)
+            if self.current not in self.disabled:
+                break
         return self.key
 
+    def disable_current(self) -> None:
+        """Stop using the current key (for example after 401 or 403)."""
+        self.disabled.add(self.current)
 
-def _is_rate_limit(exc: Exception) -> bool:
-    return getattr(exc, "status_code", None) == 429
+
+RATE_LIMITED = 429
+KEY_REJECTED = (401, 403)
+
+
+def _status(exc: Exception) -> int | None:
+    return getattr(exc, "status_code", None)
 
 
 def _retry_after_seconds(exc: Exception) -> float | None:
@@ -136,11 +152,14 @@ def _retry_after_seconds(exc: Exception) -> float | None:
 
 
 class GroqClient:
-    """Groq chat completions with key rotation and 429 back-off.
+    """Groq chat completions with key rotation.
 
-    On a 429 the next key is tried immediately. When every key has been rate
-    limited in the same round, the client waits (``retry-after`` if Groq sent
-    one, otherwise exponential back-off) and starts another round.
+    * 429 (too many requests): switch to the next key at once. When every
+      usable key is rate limited in the same round, wait (``retry-after`` if
+      Groq sent one, otherwise exponential back-off) and start another round.
+    * 401 / 403 (key invalid or forbidden): disable that key for the rest of
+      the session and switch to the next one, without waiting.
+    * Any other error is raised immediately.
     """
 
     def __init__(
@@ -166,70 +185,64 @@ class GroqClient:
         self._clients = {key: client_factory(key) for key in self.rotator.keys}
         self.name = f"Groq {model}"
 
+    def _call(self, system: str, prompt: str, max_tokens: int) -> str:
+        client = self._clients[self.rotator.key]
+        response = client.chat.completions.create(
+            model=self.model,
+            max_tokens=max_tokens,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": prompt},
+            ],
+        )
+        text = response.choices[0].message.content or ""
+        if not text.strip():
+            raise LLMError(f"{self.name} returned no text")
+        return text
+
     def complete(self, system: str, prompt: str, max_tokens: int = 4000) -> str:
         last_error: Exception | None = None
         for round_number in range(self.max_rounds):
             retry_after: float | None = None
-            for _ in range(len(self.rotator.keys)):
-                client = self._clients[self.rotator.key]
+            attempts = self.rotator.active_count
+            while attempts > 0:
+                attempts -= 1
+                key_number = self.rotator.current + 1
                 try:
-                    response = client.chat.completions.create(
-                        model=self.model,
-                        max_tokens=max_tokens,
-                        messages=[
-                            {"role": "system", "content": system},
-                            {"role": "user", "content": prompt},
-                        ],
-                    )
-                    text = response.choices[0].message.content or ""
-                    if not text.strip():
-                        raise LLMError(f"{self.name} returned no text")
-                    return text
+                    return self._call(system, prompt, max_tokens)
                 except LLMError:
                     raise
                 except Exception as exc:
-                    if not _is_rate_limit(exc):
-                        raise LLMError(f"{self.name} request failed: {exc}") from exc
+                    status = _status(exc)
                     last_error = exc
-                    retry_after = _retry_after_seconds(exc) or retry_after
-                    logger.warning("Groq key %d rate limited, rotating", self.rotator.current + 1)
+                    if status in KEY_REJECTED:
+                        logger.warning(
+                            "Groq key %d rejected (%s), disabling it", key_number, status
+                        )
+                        self.rotator.disable_current()
+                        if self.rotator.active_count == 0:
+                            raise LLMError(
+                                f"{self.name}: every API key was rejected (401/403). "
+                                "Check GROQ_API_KEYS."
+                            ) from exc
+                    elif status == RATE_LIMITED:
+                        logger.warning("Groq key %d rate limited, rotating", key_number)
+                        retry_after = _retry_after_seconds(exc) or retry_after
+                    else:
+                        raise LLMError(f"{self.name} request failed: {exc}") from exc
                     self.rotator.rotate()
             if round_number < self.max_rounds - 1:
                 delay = retry_after or self.base_delay * (2**round_number)
                 logger.warning("All Groq keys rate limited, waiting %.1fs", delay)
                 self._sleep(delay)
-        raise LLMError(f"{self.name}: all keys rate limited after {self.max_rounds} rounds") from (
-            last_error
-        )
+        raise LLMError(
+            f"{self.name}: all keys rate limited after {self.max_rounds} rounds"
+        ) from last_error
 
 
 # ---------------------------------------------------------------------------
-# Fallback chain and test double
+# Test double
 # ---------------------------------------------------------------------------
-
-
-class FallbackLLM:
-    """Try each client in order until one succeeds."""
-
-    def __init__(self, clients: Sequence[LLMClient]) -> None:
-        if not clients:
-            raise ValueError("at least one LLM client is required")
-        self.clients = list(clients)
-        self.name = " -> ".join(c.name for c in self.clients)
-        self.last_used: str | None = None
-
-    def complete(self, system: str, prompt: str, max_tokens: int = 4000) -> str:
-        errors: list[str] = []
-        for client in self.clients:
-            try:
-                text = client.complete(system, prompt, max_tokens)
-            except LLMError as exc:
-                logger.warning("%s failed, trying next provider: %s", client.name, exc)
-                errors.append(str(exc))
-                continue
-            self.last_used = client.name
-            return text
-        raise LLMError("All LLM providers failed: " + " | ".join(errors))
 
 
 class FakeLLM:
@@ -304,21 +317,27 @@ def complete_json(
 # ---------------------------------------------------------------------------
 
 
-def build_llm(settings: Any) -> FallbackLLM:
-    """Build the provider chain from settings, skipping providers with no credentials."""
-    clients: list[LLMClient] = []
-    for provider in settings.provider_order:
-        if provider == "bedrock":
-            clients.append(
-                BedrockClaudeClient(
-                    model_id=settings.bedrock_model_id,
-                    region=settings.aws_region,
-                    aws_profile=settings.aws_profile,
-                    api=settings.bedrock_api,
-                )
-            )
-        elif provider == "groq" and settings.groq_key_list:
-            clients.append(GroqClient(api_keys=settings.groq_key_list, model=settings.groq_model))
-    if not clients:
+PROVIDER_LABELS = {"bedrock": "Claude (AWS Bedrock)", "groq": "Groq"}
+
+
+def available_providers(settings: Any) -> list[str]:
+    """Providers the user can pick, in configured order. Groq needs at least one key."""
+    return [p for p in settings.provider_order if p != "groq" or settings.groq_key_list]
+
+
+def build_llm(settings: Any, provider: str | None = None) -> LLMClient:
+    """Build the client for the chosen provider (default: the first available one)."""
+    choices = available_providers(settings)
+    if not choices:
         raise LLMError("No LLM provider is configured. See .env.example.")
-    return FallbackLLM(clients)
+    provider = provider or choices[0]
+    if provider not in choices:
+        raise LLMError(f"Provider {provider!r} is not configured. Available: {', '.join(choices)}")
+    if provider == "bedrock":
+        return BedrockClaudeClient(
+            model_id=settings.bedrock_model_id,
+            region=settings.aws_region,
+            aws_profile=settings.aws_profile,
+            api=settings.bedrock_api,
+        )
+    return GroqClient(api_keys=settings.groq_key_list, model=settings.groq_model)
