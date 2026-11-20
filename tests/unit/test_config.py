@@ -19,3 +19,14 @@ def test_web_search_enabled_with_key() -> None:
 def test_max_revisions_is_capped_at_one() -> None:
     with pytest.raises(ValidationError):
         Settings(_env_file=None, max_revisions=2)
+
+
+def test_provider_order_and_groq_keys() -> None:
+    settings = Settings(_env_file=None, llm_providers="Bedrock, groq", groq_api_keys="a, b,,c")
+    assert settings.provider_order == ["bedrock", "groq"]
+    assert settings.groq_key_list == ["a", "b", "c"]
+
+
+def test_unknown_provider_is_rejected() -> None:
+    with pytest.raises(ValueError, match="Unknown LLM provider"):
+        _ = Settings(_env_file=None, llm_providers="openai").provider_order
