@@ -3,7 +3,7 @@
 Each task is one commit. Check a task off when its commit is on `main`.
 
 - [x] **T1** Write this spec (requirements, design, tasks).
-- [ ] **T2** Add `market_research/cli.py`, the `research-brief` script and `make sample`, with offline tests for the slug, the written files and the error exit. *(R1.1 to R1.3)*
+- [x] **T2** Add `market_research/cli.py`, the `research-brief` script and `make sample`, with offline tests for the slug, the written files and the error exit. *(R1.1 to R1.3)*
 - [ ] **T3** Add `Dockerfile`, `.dockerignore` and `docker-compose.yml`. *(R2.1 to R2.5)*
 - [ ] **T4** Add the `docker-build` CI job. *(R3.1, R3.2)*
 - [ ] **T5** Add `CHANGELOG.md`, set the version to `1.0.0`, and update the README with sample, Docker and specs sections. *(R4.1 to R4.3)*
