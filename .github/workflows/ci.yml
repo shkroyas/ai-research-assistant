@@ -27,3 +27,27 @@ jobs:
           uv run ruff format --check .
       - name: Test (offline, no API keys)
         run: uv run pytest --cov --cov-report=term-missing --cov-report=xml
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image (not pushed)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: ai-research-assistant:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Smoke test the container
+        run: |
+          docker run -d --name app -p 8501:8501 ai-research-assistant:ci
+          for i in $(seq 1 30); do
+            curl -fsS http://localhost:8501/_stcore/health && exit 0
+            sleep 2
+          done
+          docker logs app
+          exit 1
