@@ -40,8 +40,10 @@ jobs:
           push: false
           load: true
           tags: ai-research-assistant:ci
+          # Read the layer cache on every run; write it only from main, and never let a
+          # cache service error fail the build (pull request tokens may be read-only).
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: ${{ github.event_name == 'push' && 'type=gha,mode=max,ignore-error=true' || '' }}
       - name: Smoke test the container
         run: |
           docker run -d --name app -p 8501:8501 ai-research-assistant:ci
