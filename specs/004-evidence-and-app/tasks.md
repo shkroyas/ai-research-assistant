@@ -14,4 +14,4 @@ Each task is one commit.
 - [x] **T5** Split the UI into components, add the theme, the landing page and example queries. *(R3.1, R3.6)*
 - [x] **T6** Add live progress, the metric row, the result tabs and linked citations. *(R3.2 to R3.4)*
 - [x] **T7** Add sidebar controls and run history, and update AppTest. *(R3.5, R4.4)*
-- [ ] **T8** Update the README, the CHANGELOG and the traceability table.
+- [x] **T8** Update the README, the CHANGELOG and the traceability table.

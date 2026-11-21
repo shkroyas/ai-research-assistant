@@ -49,7 +49,7 @@ A user types a company or an industry and receives a short, sourced research bri
 
 | Criterion | Code | Tests |
 | --- | --- | --- |
-| R1.1, R1.3, R1.5 | `app/streamlit_app.py` | `test_page_renders_brief_after_research` |
+| R1.1, R1.3, R1.5 | `app/streamlit_app.py` | `test_run_shows_metrics_and_all_result_tabs` |
 | R1.2 | `app/streamlit_app.py` | `test_blank_query_shows_warning` |
 | R1.4 | `llm.available_providers`, sidebar | `test_model_picker_offers_claude_and_groq`, `test_groq_is_only_offered_with_keys` |
 | R2.1 | `agents/orchestrator.py` | `test_happy_path_runs_roles_in_order` |
