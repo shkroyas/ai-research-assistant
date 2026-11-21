@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 dependencies = [
-    "streamlit>=1.40",
+    "streamlit>=1.50",
     "pydantic>=2.8",
     "pydantic-settings>=2.4",
     "tavily-python>=0.5",
@@ -44,6 +44,7 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["app"]
 addopts = "-q --strict-markers"
 markers = ["live: calls real external APIs (skipped in CI)"]
 

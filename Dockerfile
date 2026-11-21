@@ -21,6 +21,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY README.md ./
 COPY src ./src
 COPY app ./app
+COPY .streamlit ./.streamlit
 COPY data ./data
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev

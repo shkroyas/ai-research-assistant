@@ -1,6 +1,7 @@
 """Streamlit front end for the multi-agent market research assistant."""
 
-import json
+from dataclasses import dataclass
+from datetime import datetime
 
 import streamlit as st
 
@@ -8,11 +9,46 @@ from market_research import pipeline
 from market_research.config import Settings
 from market_research.llm import PROVIDER_LABELS, LLMError, available_providers
 from market_research.models import ResearchState
-from market_research.render import brief_to_markdown
+from ui import components
+from ui.text import short
 
-st.set_page_config(page_title="AI Research Assistant", page_icon="🔎", layout="centered")
+st.set_page_config(page_title="AI Research Assistant", page_icon="🔎", layout="wide")
 
-EXAMPLE_QUERY = "Analyze the food delivery market in Nepal"
+EXAMPLES = [
+    "Analyze the food delivery market in Nepal",
+    "Electric vehicle market in India",
+    "Fintech digital wallets in Southeast Asia",
+]
+MAX_HISTORY = 10
+EXPECTED_STEPS = 5  # Orchestrator, Researcher, Analyst, Critic, Orchestrator (no revision)
+
+
+@dataclass
+class Run:
+    state: ResearchState
+    model_label: str
+    finished_at: datetime
+
+
+def init_state() -> None:
+    st.session_state.setdefault("history", [])
+    st.session_state.setdefault("selected", 0)
+    st.session_state.setdefault("query_input", "")
+    st.session_state.setdefault("autorun", False)
+    # Widget-bound keys can only change before their widget is drawn, so a new run
+    # asks for the selection to move to it on the next rerun.
+    if st.session_state.pop("select_latest", False):
+        st.session_state["selected"] = 0
+
+
+def clear_history() -> None:
+    st.session_state["history"] = []
+    st.session_state["selected"] = 0
+
+
+def pick_example(query: str) -> None:
+    st.session_state["query_input"] = query
+    st.session_state["autorun"] = True
 
 
 def model_caption(settings: Settings, provider: str) -> str:
@@ -22,13 +58,14 @@ def model_caption(settings: Settings, provider: str) -> str:
     return f"`{settings.groq_model}` · {keys} key{'s' if keys != 1 else ''} in rotation"
 
 
-def sidebar(settings: Settings) -> str | None:
+def sidebar(settings: Settings) -> tuple[str | None, Settings]:
+    """Model and research controls, plus this session's run history."""
     with st.sidebar:
         st.subheader("Model")
         providers = available_providers(settings)
         if not providers:
             st.error("No model is configured. Add keys to `.env` (see the README).")
-            return None
+            return None, settings
         provider = st.radio(
             "Model",
             providers,
@@ -37,100 +74,76 @@ def sidebar(settings: Settings) -> str | None:
         )
         st.caption(model_caption(settings, provider))
 
-        st.subheader("Web search")
+        st.subheader("Research")
         if settings.web_search_enabled:
-            st.caption("Tavily live search")
+            st.caption("Web search: Tavily, live")
         else:
-            st.caption("Off. Using labelled sample data.")
-        return provider
+            st.caption("Web search: off, using labelled sample data")
+        scrape = st.toggle(
+            "Read full source pages",
+            value=settings.scrape_pages,
+            help="Fetch each result page (respecting robots.txt) and keep its most relevant "
+            "passage instead of the short search snippet.",
+            disabled=not settings.web_search_enabled,
+        )
+        depth = st.slider(
+            "Results per search", 1, 10, settings.max_search_results, help="Up to 4 searches run"
+        )
+
+        history: list[Run] = st.session_state["history"]
+        if history:
+            st.subheader("This session")
+            st.radio(
+                "Earlier runs",
+                range(len(history)),
+                key="selected",
+                format_func=lambda i: (
+                    f"{short(history[i].state.query, 34)} · {history[i].finished_at:%H:%M}"
+                ),
+                label_visibility="collapsed",
+            )
+            st.button("Clear history", on_click=clear_history, width="stretch")
+
+    tuned = settings.model_copy(update={"scrape_pages": scrape, "max_search_results": depth})
+    return provider, tuned
 
 
-def show_summary_bar(state: ResearchState, model_label: str) -> None:
-    critique = state.critique
-    verdict = "Approved" if critique and critique.approved else "Not approved"
-    col_model, col_findings, col_critic = st.columns(3)
-    col_model.metric("Model", model_label)
-    col_findings.metric("Findings", len(state.findings))
-    col_critic.metric("Critic", verdict, f"{state.revisions_used} revision(s)", delta_color="off")
+def run_research(query: str, settings: Settings, provider: str) -> Run | None:
+    try:
+        orchestrator = pipeline.build_orchestrator(settings, provider)
+        with st.status("Running agents...", expanded=True) as status:
+            progress = st.progress(0.0)
+
+            def on_step(agent: str, state: ResearchState) -> None:
+                step = state.trace[-1]
+                st.write(f"**{step.agent}**: {step.action}")
+                progress.progress(min(len(_agent_steps(state)) / EXPECTED_STEPS, 1.0))
+
+            state = orchestrator.run(query, on_step=on_step)
+            progress.progress(1.0)
+            status.update(label="Research complete", state="complete", expanded=False)
+    except LLMError as exc:
+        st.error(f"The model could not complete the request: {exc}")
+        return None
+    return Run(state=state, model_label=PROVIDER_LABELS[provider], finished_at=datetime.now())
 
 
-def show_brief(state: ResearchState) -> None:
-    brief = state.draft
-    if brief is None:
-        st.error("No brief was produced.")
-        return
-
-    if state.uses_sample_data:
-        st.warning("These findings come from the built-in sample dataset, not live web search.")
-
-    with st.container(border=True):
-        st.markdown(f"### {state.query}")
-        st.markdown("**Summary**")
-        st.write(brief.summary)
-
-        st.markdown("**Competitors**")
-        if brief.competitors:
-            for c in brief.competitors:
-                refs = f" `{', '.join(c.finding_ids)}`" if c.finding_ids else ""
-                st.markdown(f"- **{c.name}**: {c.note}{refs}")
-        else:
-            st.caption("None identified from the available evidence.")
-
-        st.markdown("**Key observations**")
-        for observation in brief.observations:
-            st.markdown(f"- {observation}")
-
-        st.markdown("**Sources**")
-        for source in brief.sources or ["No sources were cited."]:
-            st.markdown(f"- {source}")
-
-        st.markdown("**Missing information**")
-        for item in brief.missing_information or ["None noted."]:
-            st.markdown(f"- {item}")
-
-    critique = state.critique
-    if critique and not critique.approved and critique.issues:
-        with st.expander("Critic notes"):
-            for issue in critique.issues:
-                st.markdown(f"- {issue}")
-
-    col_md, col_json = st.columns(2)
-    col_md.download_button(
-        "Download brief (.md)",
-        brief_to_markdown(state),
-        file_name="research-brief.md",
-        use_container_width=True,
-    )
-    col_json.download_button(
-        "Download full run (.json)",
-        json.dumps(state.model_dump(mode="json"), indent=2),
-        file_name="research-run.json",
-        use_container_width=True,
-    )
-
-
-def show_trace(state: ResearchState) -> None:
-    with st.expander("Agent trace"):
-        for step in state.trace:
-            st.markdown(f"**{step.agent}** · {step.action}")
-            if step.detail:
-                st.json(step.detail, expanded=False)
-        st.markdown("**Findings passed to the Analyst**")
-        for f in state.findings:
-            label = " · sample data" if f.is_sample_data else ""
-            st.markdown(f"- `{f.id}` {f.claim} _({f.source_title}{label})_")
+def _agent_steps(state: ResearchState) -> list:
+    """One entry per agent handoff (an agent may log several trace lines in one step)."""
+    return [t for t in state.trace if t.duration_ms is not None or t.action == "received query"]
 
 
 def main() -> None:
+    init_state()
     st.title("AI Research Assistant")
     st.caption(
-        "Four agents (Orchestrator, Researcher, Analyst, Critic) turn a company or "
-        "industry into a short, sourced research brief."
+        "Four agents (Orchestrator, Researcher, Analyst, Critic) turn a company or industry "
+        "into a short, sourced research brief."
     )
 
     try:
         settings = Settings()
-        provider = sidebar(settings)
+        provider, settings = sidebar(settings)
     except ValueError as exc:
         st.error(f"Configuration problem: {exc}")
         return
@@ -138,33 +151,34 @@ def main() -> None:
         return
 
     with st.form("query", border=False):
-        query = st.text_input("Company or industry", placeholder=EXAMPLE_QUERY)
-        submitted = st.form_submit_button("Run research", type="primary")
+        col_input, col_button = st.columns([5, 1], vertical_alignment="bottom")
+        query = col_input.text_input(
+            "Company or industry", key="query_input", placeholder=EXAMPLES[0]
+        )
+        submitted = col_button.form_submit_button("Run research", type="primary", width="stretch")
+
+    if st.session_state["autorun"]:
+        st.session_state["autorun"] = False
+        submitted = True
 
     if submitted:
         if not query.strip():
             st.warning("Please enter a company or industry.")
-            return
-        try:
-            orchestrator = pipeline.build_orchestrator(settings, provider)
-            with st.status("Running agents...", expanded=True) as status:
+        else:
+            run = run_research(query, settings, provider)
+            if run is not None:
+                history: list[Run] = st.session_state["history"]
+                history.insert(0, run)
+                del history[MAX_HISTORY:]
+                st.session_state["select_latest"] = True
+                st.rerun()
 
-                def on_step(agent: str, state: ResearchState) -> None:
-                    st.write(f"{state.trace[-1].agent}: {state.trace[-1].action}")
-
-                state = orchestrator.run(query, on_step=on_step)
-                status.update(label="Research complete", state="complete", expanded=False)
-            st.session_state["result"] = (state, PROVIDER_LABELS[provider])
-        except LLMError as exc:
-            st.error(f"The model could not complete the request: {exc}")
-            return
-
-    result = st.session_state.get("result")
-    if result is not None:
-        state, model_label = result
-        show_summary_bar(state, model_label)
-        show_brief(state)
-        show_trace(state)
+    history = st.session_state["history"]
+    if history:
+        current = history[min(st.session_state["selected"], len(history) - 1)]
+        components.results(current.state, current.model_label)
+    else:
+        components.hero(EXAMPLES, pick_example)
 
 
 main()
