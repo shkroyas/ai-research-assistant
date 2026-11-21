@@ -7,7 +7,7 @@ Each task is one commit. Check a task off when its commit is on `main`.
 - [x] **T3** Add `Dockerfile`, `.dockerignore` and `docker-compose.yml`. *(R2.1 to R2.5)*
 - [x] **T4** Add the `docker-build` CI job. *(R3.1, R3.2)*
 - [x] **T5** Add `CHANGELOG.md`, set the version to `1.0.0`, and update the README with sample, Docker and specs sections. *(R4.1 to R4.3)*
-- [ ] **T6** Run the Nepal query live, commit `samples/food-delivery-nepal.md` and `.json` and a screenshot. *(R1.4)*
+- [x] **T6** Run the Nepal query live, commit `samples/food-delivery-nepal.md` and `.json` and a screenshot. *(R1.4)*
 - [ ] **T7** Clone the repo fresh, follow only the README, then tag `v1.0.0`. *(R4.4)*
 
 ## How to do T6 (on a machine with keys)
