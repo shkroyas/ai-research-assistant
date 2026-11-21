@@ -1,9 +1,9 @@
 """Analyst: writes the brief from the findings, and revises it once if asked."""
 
-from market_research.grounding import cited_ids
 from market_research.llm import LLMClient, complete_json
 from market_research.models import Brief, Finding, ResearchState
 from market_research.prompts import ANALYST_SYSTEM
+from market_research.quality import brief_citations
 
 
 def format_findings(findings: list[Finding]) -> str:
@@ -19,11 +19,7 @@ def format_findings(findings: list[Finding]) -> str:
 
 def build_sources(brief: Brief, findings: list[Finding]) -> list[str]:
     """List the findings the brief actually cites, in id order, built in code."""
-    used = cited_ids(brief.summary)
-    for observation in brief.observations:
-        used |= cited_ids(observation)
-    for competitor in brief.competitors:
-        used |= set(competitor.finding_ids)
+    used = brief_citations(brief)
     sources = []
     for f in findings:
         if f.id in used:

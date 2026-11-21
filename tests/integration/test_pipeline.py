@@ -41,7 +41,11 @@ def test_never_more_than_one_revision(search_results, good_brief) -> None:
     state = build(llm, FakeSearch(search_results)).run("Nepal food delivery")
     assert state.revisions_used == 1
     assert state.critique is not None and not state.critique.approved
-    assert state.trace[-1].detail == {"approved": False, "revisions_used": 1}
+    assert state.trace[-1].detail == {
+        "approved": False,
+        "revisions_used": 1,
+        "citation_coverage": 1.0,
+    }
     assert llm.calls and len(llm.calls) == 5  # no sixth model call
 
 

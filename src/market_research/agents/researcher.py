@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from market_research.llm import LLMClient, LLMError, complete_json
 from market_research.models import Finding, ResearchState
 from market_research.prompts import RESEARCHER_SYSTEM
+from market_research.scraper import PageScraper, ScrapeResult
 from market_research.search import SearchProvider, SearchResult
 
 logger = logging.getLogger(__name__)
@@ -22,10 +23,17 @@ class SearchPlan(BaseModel):
 class Researcher:
     name = "Researcher"
 
-    def __init__(self, llm: LLMClient, search: SearchProvider, max_results: int = 5) -> None:
+    def __init__(
+        self,
+        llm: LLMClient,
+        search: SearchProvider,
+        max_results: int = 5,
+        scraper: PageScraper | None = None,
+    ) -> None:
         self.llm = llm
         self.search = search
         self.max_results = max_results
+        self.scraper = scraper
 
     def plan_queries(self, query: str) -> list[str]:
         try:
@@ -54,23 +62,52 @@ class Researcher:
                     seen.add(key)
                     results.append(result)
 
+        results = results[:MAX_FINDINGS]
+        pages = self._scrape(state, results)
+
         state.findings = [
-            Finding(
-                id=f"F{i}",
-                claim=_shorten(result.content),
-                source_title=result.title,
-                source_url=result.url,
-                is_sample_data=result.is_sample_data,
-            )
-            for i, result in enumerate(results[:MAX_FINDINGS], start=1)
+            _to_finding(i, result, pages.get(result.url or ""))
+            for i, result in enumerate(results, start=1)
         ]
         state.log(
             self.name,
             "collected findings",
             count=len(state.findings),
+            scraped=sum(f.evidence == "scraped page" for f in state.findings),
             sample_data=state.uses_sample_data,
         )
         return state
+
+    def _scrape(self, state: ResearchState, results: list[SearchResult]) -> dict[str, ScrapeResult]:
+        """Read the result pages; sample data and URL-less results are never scraped."""
+        urls = [r.url for r in results if r.url and not r.is_sample_data]
+        if self.scraper is None or not urls:
+            return {}
+        pages = self.scraper.scrape_many(urls, state.query)
+        state.log(
+            self.name,
+            "read source pages",
+            used=sum(p.ok for p in pages.values()),
+            skipped={url: p.reason for url, p in pages.items() if not p.ok},
+        )
+        return pages
+
+
+def _to_finding(index: int, result: SearchResult, page: ScrapeResult | None) -> Finding:
+    if result.is_sample_data:
+        claim, evidence = result.content, "sample data"
+    elif page is not None and page.ok and page.passage:
+        claim, evidence = page.passage, "scraped page"
+    else:
+        claim, evidence = result.content, "search snippet"
+    return Finding(
+        id=f"F{index}",
+        claim=_shorten(claim),
+        source_title=result.title,
+        source_url=result.url,
+        is_sample_data=result.is_sample_data,
+        evidence=evidence,
+    )
 
 
 def _shorten(text: str) -> str:

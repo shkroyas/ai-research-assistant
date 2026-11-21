@@ -30,6 +30,9 @@ class Settings(BaseSettings):
 
     tavily_api_key: str | None = None
 
+    # Read each result page and keep its most relevant passage (see scraper.py).
+    scrape_pages: bool = True
+
     max_search_results: int = Field(default=5, ge=1, le=10)
     max_revisions: int = Field(default=1, ge=0, le=1)
     log_level: str = "INFO"
