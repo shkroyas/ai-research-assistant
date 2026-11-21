@@ -17,5 +17,12 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - Dockerfile, docker-compose and `.dockerignore`.
 - CI: lint, offline tests, and a Docker build with a container smoke test on every pull request.
 - Specs with acceptance criteria and a traceability table in `specs/`.
+- Page reading: the Researcher fetches result pages in parallel, respects `robots.txt`, and keeps the most relevant passage, falling back to the snippet. It can be switched off with `SCRAPE_PAGES`.
+- Quality report computed in code (citation coverage, source domains, pages read, remaining citation problems), and timings for every agent step.
+- Rebuilt Streamlit page:
+  - landing view with a workflow diagram and one-click examples;
+  - live progress bar and metric row;
+  - Brief, Evidence, Quality, Agent trace and Export tabs, with citations linked to their sources;
+  - sidebar controls and run history.
 
 [1.0.0]: https://github.com/shkroyas/ai-research-assistant/releases/tag/v1.0.0

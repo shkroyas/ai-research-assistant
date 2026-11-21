@@ -43,11 +43,16 @@ flowchart LR
     C -- approved --> B[Final brief + agent trace]
     C -- "revision request (max 1)" --> A
     R -. Tavily or sample data .- S[(Search)]
+    R -. robots.txt-aware .- P[(Source pages)]
 ```
 
 Every handoff passes a single Pydantic object, `ResearchState`, holding the query, findings, draft brief, critique and an agent trace. Each agent validates what it receives and what the model returns, so malformed output is caught at the boundary instead of reaching the user.
 
+**Reads the sources, not just the snippets.** After searching, the Researcher fetches each result page in parallel. It checks `robots.txt` first, uses a timeout and a size limit, strips navigation and other boilerplate, and keeps the passage most relevant to the query. If a page cannot be read, the search snippet is kept and the reason is shown in the app.
+
 **Evidence first.** The Researcher numbers every finding (`F1`, `F2`, ...). The Analyst may only cite those ids. Plain code (`grounding.py`) then flags uncited observations, invented citations and competitors with no supporting finding, and the Critic sees those flags.
+
+**Quality you can see.** Each run ends with a quality report computed in code: citation coverage, distinct source domains, how many findings came from full pages, and any remaining citation problems. Every agent step is timed.
 
 **Choose your model.** A picker in the sidebar switches between **Claude on Amazon Bedrock** and **Groq**. Groq appears only when at least one Groq key is configured.
 
@@ -94,7 +99,19 @@ pip install -e .
 streamlit run app/streamlit_app.py
 ```
 
-Open http://localhost:8501, pick a model in the sidebar, type a company or industry, and click **Run research**.
+Open http://localhost:8501, pick a model in the sidebar, type a company or industry (or click an example), and click **Run research**.
+
+The results page has a metric row (findings, sources, citation coverage, Critic verdict, run time) and five tabs:
+
+| Tab | Shows |
+| --- | --- |
+| **Brief** | Summary, up to two competitors, key observations, sources and missing information. Each `F#` citation links to its source. |
+| **Evidence** | Every finding passed to the Analyst, with its domain, whether it came from the full page or a snippet, and whether the brief cites it |
+| **Quality** | The quality report and the Critic's review |
+| **Agent trace** | Every handoff between agents, in order, with durations |
+| **Export** | The brief as Markdown and the full run as JSON |
+
+The sidebar also lets you switch page reading on or off, set the search depth, and reopen earlier runs from the same session.
 
 To get a brief without the UI:
 
@@ -147,6 +164,7 @@ All settings are environment variables, read from `.env`. See [`.env.example`](.
 | `GROQ_MODEL` | `llama-3.3-70b-versatile` | Groq model |
 | `TAVILY_API_KEY` | unset | Enables live web search |
 | `MAX_SEARCH_RESULTS` | `5` | Results per search query |
+| `SCRAPE_PAGES` | `true` | Read each result page and keep its most relevant passage |
 | `MAX_REVISIONS` | `1` | Critic revision limit (0 or 1) |
 
 Only using Groq? Set `LLM_PROVIDERS=groq`. Only Claude? Set `LLM_PROVIDERS=bedrock`.
@@ -187,12 +205,17 @@ GitHub Actions runs two jobs on every pull request and on every push to `main`: 
 
 ```text
 ai-research-assistant/
-├── app/streamlit_app.py          # UI: input, progress, brief, agent trace
+├── app/
+│   ├── streamlit_app.py          # page flow: sidebar, query, results or landing view
+│   └── ui/                       # components (tabs, metrics, tables) and text helpers
+├── .streamlit/config.toml        # theme
 ├── src/market_research/
 │   ├── config.py                 # settings from environment variables
 │   ├── models.py                 # Pydantic contracts passed between agents
 │   ├── llm.py                    # Bedrock Claude, Groq with key rotation, FakeLLM
 │   ├── search.py                 # Tavily search and labelled sample data
+│   ├── scraper.py                # robots.txt-aware page reading and passage choice
+│   ├── quality.py                # citation coverage and other evidence metrics
 │   ├── grounding.py              # citation checks in plain code
 │   ├── cli.py                    # research-brief command
 │   └── agents/                   # orchestrator, researcher, analyst, critic
@@ -213,6 +236,7 @@ ai-research-assistant/
 - **No agent framework.** Four small agent classes and an orchestrator loop are easier to read, test and debug than a framework for a fixed four-step pipeline. Each agent shares the same `run(state) -> state` interface, so a framework such as LangGraph could be introduced later without rewriting the agents.
 - **Code checks what code can.** The revision limit, the two-competitor cap and citation validity are enforced in Python, not left to the model.
 - **Honest data labelling.** Sample data is marked in the data model, in the UI and in the exported brief. Missing information is listed rather than guessed.
+- **Polite, bounded scraping.** Pages are fetched only from search results, never crawled. `robots.txt` is respected, requests identify the app, and every fetch has a timeout and a size limit. Static HTML parsing (BeautifulSoup) keeps the image small; a headless browser was rejected as too heavy for the benefit.
 - **Provider independence.** Agents depend only on a one-method `LLMClient` interface, so new providers can be added without touching the agents.
 
 ---
@@ -227,6 +251,7 @@ Work is planned in [`specs/`](specs/README.md) before it is built. Each spec lis
 
 - Brief quality depends on what web search returns; niche or very local topics may have thin coverage, which the brief reports under *Missing information*.
 - The sample dataset is small and illustrative, intended only for offline demos.
+- Page reading does not run JavaScript, so content rendered only in the browser falls back to the search snippet. Paywalled pages are not read.
 - Briefs are drafts for a person to review, not verified research.
 
 ---

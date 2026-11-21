@@ -1,6 +1,6 @@
 # 004 Deeper evidence and a complete app: requirements
 
-**Status:** In progress.
+**Status:** Done.
 
 ## Goal
 
@@ -54,3 +54,19 @@ Search snippets are short and sometimes out of context. Read the source pages th
 
 - Crawling beyond the result pages, rendering JavaScript, and bypassing paywalls or logins.
 - Persisting run history across browser sessions.
+
+## Traceability
+
+| Criterion | Code | Tests |
+| --- | --- | --- |
+| R1.1, R1.2 | `scraper.extract_paragraphs`, `scraper.best_passage` | `test_extract_paragraphs_strips_boilerplate_and_prefers_article`, `test_best_passage_picks_most_relevant_paragraph`, `test_best_passage_trims_long_text_on_a_word_boundary` |
+| R1.3 | `PageScraper._allowed`, `USER_AGENT` | `test_robots_txt_disallow_is_respected`, `test_robots_txt_forbidden_means_disallow_all`, `test_scrape_returns_relevant_passage_and_sends_user_agent` |
+| R1.4 | `PageScraper._fetch_html` | `test_unusable_pages_report_a_reason`, `test_size_limit_stops_reading`, `test_timeout_and_network_errors_never_raise` |
+| R1.5 | `PageScraper.scrape_many` | `test_scrape_many_deduplicates_and_reads_robots_once_per_site` |
+| R1.6, R1.7 | `Researcher._scrape`, `models.Finding` | `test_scraped_passage_replaces_snippet_and_failures_keep_snippet`, `test_domain_is_exported_with_the_finding` |
+| R1.8 | `config.scrape_pages`, `pipeline` | `test_sample_data_is_never_scraped`, `test_pipeline_attaches_scraper_only_when_enabled`, `test_sidebar_controls_reach_the_pipeline` |
+| R2.1 | `quality.assess` | `test_assess_counts_coverage_domains_and_evidence_types`, `test_assess_ignores_invented_ids_and_reports_problems` |
+| R2.2 | `Orchestrator.run` | `test_orchestrator_records_step_durations_and_quality` |
+| R3.1 | `ui.components.hero` | `test_landing_page_explains_agents_and_offers_examples`, `test_example_button_runs_immediately` |
+| R3.2 to R3.4 | `run_research`, `ui.components.results`, `ui.text.link_citations` | `test_run_shows_metrics_and_all_result_tabs`, `test_link_citations_links_known_urls_and_keeps_others_plain` |
+| R3.5 | `sidebar`, run history | `test_history_keeps_earlier_runs_and_reopens_them`, `test_sidebar_controls_reach_the_pipeline` |
