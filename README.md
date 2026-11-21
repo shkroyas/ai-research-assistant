@@ -141,7 +141,7 @@ All settings are environment variables, read from `.env`. See [`.env.example`](.
 | `LLM_PROVIDERS` | `bedrock,groq` | Models offered in the picker; the first is selected by default |
 | `AWS_REGION` | `us-east-1` | Region where Bedrock model access is enabled |
 | `AWS_PROFILE` | unset | Named AWS CLI profile, if you use one |
-| `BEDROCK_MODEL_ID` | `anthropic.claude-opus-4-6-v1` | Claude model id on Bedrock, copied from the console |
+| `BEDROCK_MODEL_ID` | `us.anthropic.claude-opus-4-6-v1` | Claude inference profile id on Bedrock, copied from the console |
 | `BEDROCK_API` | `invoke` | `invoke` (InvokeModel, works with Claude Opus 4.6) or `mantle` (Claude 4.7 and later) |
 | `GROQ_API_KEYS` | unset | One or more Groq keys, comma separated |
 | `GROQ_MODEL` | `llama-3.3-70b-versatile` | Groq model |
@@ -162,7 +162,7 @@ Only using Groq? Set `LLM_PROVIDERS=groq`. Only Claude? Set `LLM_PROVIDERS=bedro
 3. Give the app credentials using any standard AWS method:
    - `aws configure` (writes `~/.aws/credentials`), then optionally set `AWS_PROFILE`, or
    - set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` in `.env`.
-4. Set `AWS_REGION` and `BEDROCK_MODEL_ID` in `.env` to match what you enabled. Copy the id exactly as the Bedrock console shows it; in some regions this is a cross-region inference profile id starting with `us.`.
+4. Set `AWS_REGION` and `BEDROCK_MODEL_ID` in `.env` to match what you enabled. Claude Opus 4.6 cannot be called by its plain model id (on-demand throughput is not supported), so use its **inference profile** id, which starts with `us.` or `global.`. List the ids available to you with `aws bedrock list-inference-profiles --region us-east-1`.
 5. Keep `BEDROCK_API=invoke` for Claude Opus 4.6. Claude 4.7 and later models can also use `BEDROCK_API=mantle`.
 
 > The project pins the `anthropic` SDK to 1.x. SDK 2.x sends a newer API version that Bedrock accepts only for Claude 4.7 and later, so 1.x keeps Claude Opus 4.6 working.

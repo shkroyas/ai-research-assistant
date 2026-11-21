@@ -185,5 +185,5 @@ def test_bedrock_client_rejects_unknown_api() -> None:
 def test_bedrock_invoke_client_is_default_and_builds_offline() -> None:
     from anthropic import AnthropicBedrock
 
-    client = BedrockClaudeClient(model_id="anthropic.claude-opus-4-6-v1", region="us-east-1")
+    client = BedrockClaudeClient(model_id="us.anthropic.claude-opus-4-6-v1", region="us-east-1")
     assert isinstance(client._client, AnthropicBedrock)

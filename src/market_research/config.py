@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     # Amazon Bedrock (Claude). Credentials come from the standard AWS chain.
     aws_region: str = "us-east-1"
     aws_profile: str | None = None
-    bedrock_model_id: str = "anthropic.claude-opus-4-6-v1"
+    bedrock_model_id: str = "us.anthropic.claude-opus-4-6-v1"
     # "invoke" (InvokeModel, Claude Opus 4.6 and earlier, and newer) or "mantle" (4.7+).
     bedrock_api: Literal["invoke", "mantle"] = "invoke"
 
