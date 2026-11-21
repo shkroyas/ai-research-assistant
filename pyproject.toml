@@ -1,6 +1,6 @@
 [project]
 name = "market-research"
-version = "0.1.0"
+version = "1.0.0"
 description = "Multi-agent market research assistant: Orchestrator, Researcher, Analyst and Critic produce a sourced research brief."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -13,6 +13,9 @@ dependencies = [
     "anthropic[bedrock]>=1.17,<2",
     "groq>=0.11",
 ]
+
+[project.scripts]
+research-brief = "market_research.cli:main"
 
 [dependency-groups]
 dev = [

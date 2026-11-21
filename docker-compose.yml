@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    image: ai-research-assistant:local
+    ports:
+      - "8501:8501"
+    env_file: .env
+    environment:
+      # Lets AWS_PROFILE from .env resolve against your local AWS config.
+      AWS_CONFIG_FILE: /home/app/.aws/config
+      AWS_SHARED_CREDENTIALS_FILE: /home/app/.aws/credentials
+    volumes:
+      - ${HOME}/.aws:/home/app/.aws:ro
+    restart: unless-stopped

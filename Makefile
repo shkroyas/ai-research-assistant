@@ -1,4 +1,4 @@
-.PHONY: install lint format test run
+.PHONY: install lint format test run sample
 
 install:  ## Install app and dev dependencies
 	uv sync
@@ -16,3 +16,6 @@ test:  ## Run the offline test suite with coverage
 
 run:  ## Start the Streamlit app
 	uv run streamlit run app/streamlit_app.py
+
+sample:  ## Write a sample brief to samples/ (needs a configured model)
+	uv run research-brief "Analyze the food delivery market in Nepal" --out samples

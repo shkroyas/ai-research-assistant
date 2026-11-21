@@ -20,11 +20,14 @@ The brief contains a **summary**, **up to two competitors**, **key observations*
 - [How it works](#how-it-works)
 - [What you need](#what-you-need)
 - [Run it locally](#run-it-locally)
+- [Run with Docker](#run-with-docker)
+- [Sample output](#sample-output)
 - [Configuration](#configuration)
 - [Setting up Amazon Bedrock](#setting-up-amazon-bedrock)
 - [Tests and code quality](#tests-and-code-quality)
 - [Project structure](#project-structure)
 - [Design decisions](#design-decisions)
+- [Specs](#specs)
 - [Limitations](#limitations)
 
 ---
@@ -93,6 +96,40 @@ streamlit run app/streamlit_app.py
 
 Open http://localhost:8501, pick a model in the sidebar, type a company or industry, and click **Run research**.
 
+To get a brief without the UI:
+
+```bash
+uv run research-brief "Analyze the food delivery market in Nepal" --provider groq --out samples
+```
+
+This writes `samples/food-delivery-nepal.md` and `samples/food-delivery-nepal.json`. `--provider` is `bedrock` or `groq`, and defaults to the first entry of `LLM_PROVIDERS`.
+
+---
+
+## Run with Docker
+
+```bash
+cp .env.example .env      # then add your keys
+docker compose up --build
+```
+
+Open http://localhost:8501. Compose reads `.env` and mounts `~/.aws` read-only, so an `AWS_PROFILE` set in `.env` works inside the container without copying keys into it.
+
+Without Compose:
+
+```bash
+docker build -t ai-research-assistant .
+docker run --rm -p 8501:8501 --env-file .env ai-research-assistant
+```
+
+The image installs only runtime dependencies from `uv.lock`, runs as a non-root user, and contains no `.env`, tests or git history.
+
+---
+
+## Sample output
+
+[`samples/food-delivery-nepal.md`](samples/food-delivery-nepal.md) is a brief from a live run of *"Analyze the food delivery market in Nepal"*. [`samples/food-delivery-nepal.json`](samples/food-delivery-nepal.json) is the full run behind it: findings, drafts, critique and the agent trace. To make your own, run `make sample`.
+
 ---
 
 ## Configuration
@@ -142,7 +179,7 @@ make lint     # ruff lint and format check
 make format   # auto-fix lint issues and format
 ```
 
-GitHub Actions runs lint and the full test suite on every pull request and on every push to `main`.
+GitHub Actions runs two jobs on every pull request and on every push to `main`: lint plus the full test suite, and a Docker build with a container smoke test.
 
 ---
 
@@ -157,11 +194,14 @@ ai-research-assistant/
 │   ├── llm.py                    # Bedrock Claude, Groq with key rotation, FakeLLM
 │   ├── search.py                 # Tavily search and labelled sample data
 │   ├── grounding.py              # citation checks in plain code
+│   ├── cli.py                    # research-brief command
 │   └── agents/                   # orchestrator, researcher, analyst, critic
 ├── data/sample/                  # labelled sample data for offline demos
 ├── samples/                      # example output brief
+├── specs/                        # requirements, design and tasks per feature
 ├── tests/                        # offline unit and integration tests
-├── .github/workflows/ci.yml      # lint and tests on every PR
+├── .github/workflows/ci.yml      # lint, tests and Docker build on every PR
+├── Dockerfile, docker-compose.yml
 ├── .env.example                  # configuration template, no secrets
 └── pyproject.toml
 ```
@@ -174,6 +214,12 @@ ai-research-assistant/
 - **Code checks what code can.** The revision limit, the two-competitor cap and citation validity are enforced in Python, not left to the model.
 - **Honest data labelling.** Sample data is marked in the data model, in the UI and in the exported brief. Missing information is listed rather than guessed.
 - **Provider independence.** Agents depend only on a one-method `LLMClient` interface, so new providers can be added without touching the agents.
+
+---
+
+## Specs
+
+Work is planned in [`specs/`](specs/README.md) before it is built. Each spec lists numbered acceptance criteria, the design and the task list. [Spec 001](specs/001-research-brief/requirements.md) maps every requirement of the assignment to the code and the test that proves it.
 
 ---
 
