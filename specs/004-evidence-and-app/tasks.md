@@ -6,7 +6,7 @@ Each task is one commit.
 
 - [x] **T1** Write this spec.
 - [x] **T2** Add `scraper.py` and its offline tests. *(R1.1 to R1.5, R4.1)*
-- [ ] **T3** Add `evidence` and `domain` to findings, have the Researcher use scraped passages with the snippet as fallback, and add the `SCRAPE_PAGES` setting. *(R1.6 to R1.8, R4.2)*
+- [x] **T3** Add `evidence` and `domain` to findings, have the Researcher use scraped passages with the snippet as fallback, and add the `SCRAPE_PAGES` setting. *(R1.6 to R1.8, R4.2)*
 - [ ] **T4** Add step and run timings, and the quality report. *(R2.1, R2.2, R4.3)*
 
 ## Branch `feat/app-experience` (after the branch above merges)

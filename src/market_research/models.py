@@ -5,11 +5,22 @@ these Pydantic models, so each step's input and output is validated.
 """
 
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Literal
+from urllib.parse import urlsplit
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, computed_field, field_validator
 
 MAX_COMPETITORS = 2
+
+Evidence = Literal["scraped page", "search snippet", "sample data"]
+
+
+def domain_of(url: str | None) -> str | None:
+    """'https://www.example.com/a' -> 'example.com'."""
+    if not url:
+        return None
+    host = urlsplit(url).hostname or ""
+    return host.removeprefix("www.") or None
 
 
 class Finding(BaseModel):
@@ -20,6 +31,12 @@ class Finding(BaseModel):
     source_title: str
     source_url: str | None = None
     is_sample_data: bool = False
+    evidence: Evidence = "search snippet"
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def domain(self) -> str | None:
+        return domain_of(self.source_url)
 
 
 class Competitor(BaseModel):
