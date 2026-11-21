@@ -161,7 +161,7 @@ All settings are environment variables, read from `.env`. See [`.env.example`](.
 | `BEDROCK_MODEL_ID` | `us.anthropic.claude-opus-4-6-v1` | Claude inference profile id on Bedrock, copied from the console |
 | `BEDROCK_API` | `invoke` | `invoke` (InvokeModel, works with Claude Opus 4.6) or `mantle` (Claude 4.7 and later) |
 | `GROQ_API_KEYS` | unset | One or more Groq keys, comma separated |
-| `GROQ_MODEL` | `llama-3.3-70b-versatile` | Groq model |
+| `GROQ_MODEL` | `openai/gpt-oss-120b` | Groq chat model. Groq retires models over time; list the ones your key can use at `https://api.groq.com/openai/v1/models` |
 | `TAVILY_API_KEY` | unset | Enables live web search |
 | `MAX_SEARCH_RESULTS` | `5` | Results per search query |
 | `SCRAPE_PAGES` | `true` | Read each result page and keep its most relevant passage |

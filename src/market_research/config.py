@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     # Groq: one or more keys, comma separated, rotated on rate limits.
     groq_api_keys: str | None = None
-    groq_model: str = "llama-3.3-70b-versatile"
+    groq_model: str = "openai/gpt-oss-120b"
 
     tavily_api_key: str | None = None
 
