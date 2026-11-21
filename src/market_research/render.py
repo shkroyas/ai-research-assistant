@@ -46,6 +46,13 @@ def brief_to_markdown(state: ResearchState) -> str:
         "---",
         f"_Critic review: {status} after {state.revisions_used} revision(s)._",
     ]
+    q = state.quality
+    if q is not None:
+        lines.append(
+            f"_Evidence: {q.findings} findings from {len(q.domains)} source domain(s), "
+            f"{q.scraped_pages} read from the full page; {q.cited} cited "
+            f"({q.citation_coverage:.0%} coverage)._"
+        )
     if critique and not critique.approved and critique.issues:
         lines += ["", "_Open critic notes:_"] + [f"- {i}" for i in critique.issues]
     return "\n".join(lines) + "\n"

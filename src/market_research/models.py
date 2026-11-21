@@ -72,6 +72,20 @@ class StepLog(BaseModel):
     action: str
     detail: dict[str, Any] = Field(default_factory=dict)
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    duration_ms: int | None = None
+
+
+class QualityReport(BaseModel):
+    """Evidence quality of a finished run, computed in code (see quality.py)."""
+
+    findings: int
+    cited: int
+    citation_coverage: float = Field(ge=0, le=1)
+    domains: list[str] = Field(default_factory=list)
+    scraped_pages: int = 0
+    search_snippets: int = 0
+    sample_findings: int = 0
+    grounding_problems: list[str] = Field(default_factory=list)
 
 
 class ResearchState(BaseModel):
@@ -83,6 +97,8 @@ class ResearchState(BaseModel):
     critique: Critique | None = None
     revisions_used: int = 0
     trace: list[StepLog] = Field(default_factory=list)
+    quality: QualityReport | None = None
+    duration_ms: int | None = None
 
     @field_validator("query")
     @classmethod
