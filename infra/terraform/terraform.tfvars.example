@@ -1,0 +1,4 @@
+# Copy to terraform.tfvars (git-ignored) to override defaults.
+# budget_email     = "you@example.com"
+# certificate_arn  = "arn:aws:acm:us-east-1:123456789012:certificate/..."
+# desired_count    = 1

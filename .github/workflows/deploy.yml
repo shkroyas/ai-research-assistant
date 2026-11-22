@@ -2,8 +2,8 @@ name: Deploy
 
 # Ships a new image to ECS Fargate after CI passes on main (spec 003, R1.4).
 # AWS access comes from GitHub's OIDC token and the role created by
-# infra/cloudformation.yaml; no AWS keys are stored in GitHub.
-# Set the repository variable AWS_DEPLOY_ROLE_ARN (the stack's DeployRoleArn output)
+# infra/terraform; no AWS keys are stored in GitHub.
+# Set the repository variable AWS_DEPLOY_ROLE_ARN (the deploy_role_arn Terraform output)
 # to turn this on. Until then the job is skipped.
 
 on:

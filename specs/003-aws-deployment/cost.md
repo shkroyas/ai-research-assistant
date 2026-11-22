@@ -46,4 +46,4 @@ Bedrock bills per token, whichever option runs the app. Claude Opus 4.6 costs $5
 
 - An AWS Budget of $30 a month with email alerts at 50%, 80% and 100%.
 - Every resource is tagged `project=ai-research-assistant`, so the bill can be filtered and the teardown can find everything.
-- A teardown script removes the whole stack in one step after the demo window.
+- `infra/teardown.sh` runs `terraform destroy`, which removes everything in one step after the demo window.
