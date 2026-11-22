@@ -1,6 +1,6 @@
 # 003 AWS deployment: requirements
 
-**Status:** Built. Design in [design.md](design.md), cost in [cost.md](cost.md), tasks in [tasks.md](tasks.md).
+**Status:** Done, live in us-east-1. Design in [design.md](design.md), cost in [cost.md](cost.md), tasks in [tasks.md](tasks.md).
 
 ## Goal
 

@@ -69,6 +69,18 @@ variable "github_repo" {
   default     = "shkroyas/ai-research-assistant"
 }
 
+variable "github_owner_id" {
+  description = "Numeric id of the repository owner, used in GitHub's immutable OIDC subject."
+  type        = string
+  default     = "119834276"
+}
+
+variable "github_repo_id" {
+  description = "Numeric id of the repository, used in GitHub's immutable OIDC subject."
+  type        = string
+  default     = "1465311210"
+}
+
 variable "create_github_oidc_provider" {
   description = "Set to false if the account already has the token.actions.githubusercontent.com provider."
   type        = bool
