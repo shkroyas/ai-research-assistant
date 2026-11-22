@@ -26,5 +26,10 @@ def assess(state: ResearchState) -> QualityReport:
         scraped_pages=sum(f.evidence == "scraped page" for f in findings),
         search_snippets=sum(f.evidence == "search snippet" for f in findings),
         sample_findings=sum(f.evidence == "sample data" for f in findings),
-        grounding_problems=check_grounding(state.draft, findings) if state.draft else [],
+        on_focus=sum(f.on_focus for f in findings),
+        focus=list(state.focus),
+        kind=state.kind,
+        grounding_problems=check_grounding(state.draft, findings, state.kind)
+        if state.draft
+        else [],
     )

@@ -11,8 +11,15 @@ from urllib.parse import urlsplit
 from pydantic import BaseModel, Field, computed_field, field_validator
 
 MAX_COMPETITORS = 2
+MAX_LIST_ITEMS = 8
 
 Evidence = Literal["scraped page", "search snippet", "sample data"]
+# What the user asked about: an industry, one company, several companies, or a theme.
+RequestKind = Literal["market", "company", "comparison", "topic"]
+REQUEST_KINDS: tuple[str, ...] = ("market", "company", "comparison", "topic")
+# Whether a request can be researched as asked, needs a clarifying question, or is declined.
+IntakeStatus = Literal["research", "unclear", "decline"]
+INTAKE_STATUSES: tuple[str, ...] = ("research", "unclear", "decline")
 
 
 def domain_of(url: str | None) -> str | None:
@@ -32,6 +39,7 @@ class Finding(BaseModel):
     source_url: str | None = None
     is_sample_data: bool = False
     evidence: Evidence = "search snippet"
+    on_focus: bool = True  # False for general background that does not mention the focus
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -55,6 +63,19 @@ class Brief(BaseModel):
     observations: list[str] = Field(default_factory=list)
     sources: list[str] = Field(default_factory=list)
     missing_information: list[str] = Field(default_factory=list)
+
+    @field_validator("competitors", mode="before")
+    @classmethod
+    def keep_first_competitors(cls, value: object) -> object:
+        """A model that names three competitors loses the extras instead of failing."""
+        return value[:MAX_COMPETITORS] if isinstance(value, list) else value
+
+    @field_validator("observations", "missing_information", mode="before")
+    @classmethod
+    def drop_blank_lines(cls, value: object) -> object:
+        if not isinstance(value, list):
+            return value
+        return [v for v in value if not isinstance(v, str) or v.strip()][:MAX_LIST_ITEMS]
 
 
 class Critique(BaseModel):
@@ -85,13 +106,32 @@ class QualityReport(BaseModel):
     scraped_pages: int = 0
     search_snippets: int = 0
     sample_findings: int = 0
+    on_focus: int = 0
+    focus: list[str] = Field(default_factory=list)
+    kind: RequestKind = "market"
     grounding_problems: list[str] = Field(default_factory=list)
+
+
+class Intake(BaseModel):
+    """The first check on a request, made before any search runs."""
+
+    status: IntakeStatus = "research"
+    reason: str = ""
+    question: str | None = None  # what to ask the user when the request is unclear
+    suggestions: list[str] = Field(default_factory=list)  # research-ready rewrites
+
+    @property
+    def proceed(self) -> bool:
+        return self.status == "research"
 
 
 class ResearchState(BaseModel):
     """Shared state handed from agent to agent."""
 
     query: str
+    intake: Intake = Field(default_factory=Intake)
+    kind: RequestKind = "market"
+    focus: list[str] = Field(default_factory=list)
     findings: list[Finding] = Field(default_factory=list)
     draft: Brief | None = None
     critique: Critique | None = None
@@ -103,7 +143,7 @@ class ResearchState(BaseModel):
     @field_validator("query")
     @classmethod
     def query_not_blank(cls, value: str) -> str:
-        value = value.strip()
+        value = " ".join("".join(c if c.isprintable() else " " for c in value).split())
         if not value:
             raise ValueError("query must not be empty")
         return value

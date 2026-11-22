@@ -58,7 +58,7 @@ A user types a company or an industry and receives a short, sourced research bri
 | R2.4 | `agents/orchestrator.py`, `config.py` | `test_one_revision_then_approval`, `test_never_more_than_one_revision`, `test_max_revisions_is_capped_at_one` |
 | R3.1 | `models.py` | `test_brief_round_trips_through_json`, `test_state_rejects_blank_query` |
 | R3.2 | `llm.complete_json` | `test_complete_json_retries_once_on_invalid_output`, `test_complete_json_raises_after_attempts` |
-| R4.1 | `models.Brief` | `test_brief_allows_at_most_two_competitors`, `test_markdown_contains_all_brief_sections` |
+| R4.1 | `models.Brief` | `test_brief_keeps_at_most_two_competitors`, `test_markdown_contains_all_brief_sections` |
 | R4.2 | `grounding.py`, `agents/critic.py` | `test_flags_uncited_and_invented_citations`, `test_critic_overrides_model_approval_when_citations_are_invalid` |
 | R4.3 | `agents/analyst.build_sources` | `test_analyst_drafts_brief_and_builds_sources_in_code` |
 | R5.1 | `llm.BedrockClaudeClient` | `test_bedrock_invoke_client_is_default_and_builds_offline`, `test_bedrock_client_joins_text_and_handles_refusal` |

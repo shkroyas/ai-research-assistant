@@ -54,6 +54,7 @@ def test_landing_page_explains_agents_and_offers_examples(chosen_providers) -> N
         assert f"**{agent}**" in text
     labels = [b.label for b in at.button]
     assert "Analyze the food delivery market in Nepal" in labels
+    assert "Research Tesla and its main competitors" in labels  # other request types too
     assert not at.tabs  # no results yet
 
 
@@ -66,6 +67,7 @@ def test_run_shows_metrics_and_all_result_tabs(chosen_providers) -> None:
     assert metrics["Model"] == "Claude"
     assert metrics["Critic"] == "Approved"
     assert metrics["Citation coverage"] == "50%"  # 2 of the 4 sample findings are cited
+    assert metrics["About Nepal"] == "4 / 4"  # every sample finding is about Nepal
 
     text = markdown_text(at)
     for section in ("Summary", "Competitors", "Key observations", "Sources", "Missing"):
@@ -125,3 +127,26 @@ def test_blank_query_shows_warning(chosen_providers) -> None:
     at = AppTest.from_file(APP, default_timeout=30).run()
     button(at, "Run research").click().run()
     assert any("Please enter" in w.value for w in at.warning)
+
+
+def test_vague_request_asks_for_clarity_with_suggestions(chosen_providers) -> None:
+    at = research(AppTest.from_file(APP, default_timeout=30).run(), "hello")
+    assert not at.exception
+    assert any("more detail" in i.value for i in at.info)
+    assert not at.tabs and not at.session_state["history"]
+    button(at, "Analyze the food delivery market in Nepal").click().run()
+    assert at.text_input(key="query_input").value == "Analyze the food delivery market in Nepal"
+    assert not at.exception
+    assert at.tabs  # the suggestion ran as a normal request
+
+
+def test_unexpected_error_shows_a_message_not_a_traceback(monkeypatch) -> None:
+    monkeypatch.setenv("LLM_PROVIDERS", "bedrock")
+
+    def broken(settings, provider=None):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(pipeline, "build_orchestrator", broken)
+    at = research(AppTest.from_file(APP, default_timeout=30).run(), "Food delivery in Nepal")
+    assert not at.exception
+    assert any("Something went wrong" in e.value for e in at.error)

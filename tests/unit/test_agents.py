@@ -11,10 +11,12 @@ def test_researcher_numbers_findings_and_dedupes(search_results) -> None:
     search = FakeSearch(search_results)
     llm = FakeLLM([{"queries": ["q1", "q2"]}])
     state = Researcher(llm, search).run(ResearchState(query="Nepal food delivery"))
-    assert search.queries == ["q1", "q2"]
+    # No focus from the model, so the capitalised name in the query is used and added.
+    assert search.queries == ["q1 Nepal", "q2 Nepal"]
     assert [f.id for f in state.findings] == ["F1", "F2"]  # same URLs in both searches
     assert state.findings[0].source_url == "https://a.example"
-    assert state.trace[0].detail["queries"] == ["q1", "q2"]
+    assert state.trace[0].detail["queries"] == ["q1 Nepal", "q2 Nepal"]
+    assert state.focus == ["Nepal"]
 
 
 def test_researcher_falls_back_to_raw_query_when_planning_fails() -> None:
@@ -27,7 +29,7 @@ def test_researcher_falls_back_to_raw_query_when_planning_fails() -> None:
 def test_researcher_keeps_sample_data_label() -> None:
     sample = [SearchResult(title="Sample: x", content="c", is_sample_data=True)]
     state = Researcher(FakeLLM([{"queries": ["q"]}]), FakeSearch(sample)).run(
-        ResearchState(query="q")
+        ResearchState(query="Nepal food delivery")
     )
     assert state.uses_sample_data
 
@@ -89,3 +91,22 @@ def test_analyst_handles_empty_findings() -> None:
     empty = Brief(summary="No evidence found.", missing_information=["Everything"])
     state = Analyst(FakeLLM([empty])).run(ResearchState(query="q"))
     assert state.draft is not None and state.draft.sources == []
+
+
+def test_analyst_prompt_names_focus_and_labels_background(good_brief) -> None:
+    from market_research.models import Finding
+
+    llm = FakeLLM([good_brief])
+    state = ResearchState(
+        query="Analyze the food delivery market in Nepal",
+        focus=["Nepal"],
+        findings=[
+            Finding(id="F1", claim="Foodmandu leads Nepal", source_title="K"),
+            Finding(id="F2", claim="Global market grows", source_title="G", on_focus=False),
+        ],
+    )
+    Analyst(llm).run(state)
+    prompt = llm.calls[0]["prompt"]
+    assert "Request type: market\nFocus: Nepal" in prompt
+    assert "F2 [BACKGROUND]: Global market grows" in prompt
+    assert "F1: Foodmandu leads Nepal" in prompt

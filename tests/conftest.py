@@ -19,8 +19,12 @@ class FakeSearch:
 @pytest.fixture
 def search_results() -> list[SearchResult]:
     return [
-        SearchResult(title="Report A", url="https://a.example", content="Foodmandu leads."),
-        SearchResult(title="Report B", url="https://b.example", content="Pathao Food grows."),
+        SearchResult(
+            title="Report A", url="https://a.example", content="Foodmandu leads in Nepal."
+        ),
+        SearchResult(
+            title="Report B", url="https://b.example", content="Pathao Food grows in Nepal."
+        ),
     ]
 
 

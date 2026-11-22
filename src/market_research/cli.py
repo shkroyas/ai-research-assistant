@@ -50,6 +50,23 @@ def write_outputs(state: ResearchState, out_dir: Path, name: str) -> tuple[Path,
     return md_path, json_path
 
 
+def intake_message(state: ResearchState) -> str:
+    """Explain why no brief was written, and what to try instead."""
+    intake = state.intake
+    if intake.status == "unclear":
+        lines = ["The request needs clarifying before research."]
+        if intake.question:
+            lines.append(intake.question)
+    else:
+        lines = ["This request was declined."]
+    if intake.reason:
+        lines.append(f"Reason: {intake.reason}")
+    if intake.suggestions:
+        lines.append("Try instead:")
+        lines += [f"  - {s}" for s in intake.suggestions]
+    return "\n".join(lines)
+
+
 def parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="research-brief",
@@ -80,6 +97,10 @@ def main(argv: list[str] | None = None) -> int:
     except (LLMError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
+
+    if not state.intake.proceed:
+        print(intake_message(state), file=sys.stderr)
+        return 2
 
     md_path, json_path = write_outputs(state, args.out, args.name or slugify(args.query))
     print(md_path)

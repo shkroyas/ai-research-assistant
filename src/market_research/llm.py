@@ -29,6 +29,10 @@ class LLMError(RuntimeError):
     """Raised when a model call fails and cannot be retried further."""
 
 
+# Seconds before a model call gives up, so a stalled request never hangs the app.
+REQUEST_TIMEOUT = 120.0
+
+
 class LLMClient(Protocol):
     name: str
 
@@ -66,11 +70,15 @@ class BedrockClaudeClient:
             if api == "mantle":
                 from anthropic import AnthropicBedrockMantle
 
-                client = AnthropicBedrockMantle(aws_region=region, aws_profile=aws_profile)
+                client = AnthropicBedrockMantle(
+                    aws_region=region, aws_profile=aws_profile, timeout=REQUEST_TIMEOUT
+                )
             else:
                 from anthropic import AnthropicBedrock
 
-                client = AnthropicBedrock(aws_region=region, aws_profile=aws_profile)
+                client = AnthropicBedrock(
+                    aws_region=region, aws_profile=aws_profile, timeout=REQUEST_TIMEOUT
+                )
         self._client = client
         self.model_id = model_id
         self.name = f"Bedrock {model_id}"
@@ -180,7 +188,7 @@ class GroqClient:
             from groq import Groq
 
             def client_factory(key: str) -> Any:
-                return Groq(api_key=key, max_retries=0)
+                return Groq(api_key=key, max_retries=0, timeout=REQUEST_TIMEOUT)
 
         self._clients = {key: client_factory(key) for key in self.rotator.keys}
         self.name = f"Groq {model}"

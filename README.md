@@ -50,9 +50,13 @@ Every handoff passes a single Pydantic object, `ResearchState`, holding the quer
 
 **Reads the sources, not just the snippets.** After searching, the Researcher fetches each result page in parallel. It checks `robots.txt` first, uses a timeout and a size limit, strips navigation and other boilerplate, and keeps the passage most relevant to the query. If a page cannot be read, the search snippet is kept and the reason is shown in the app.
 
-**Evidence first.** The Researcher numbers every finding (`F1`, `F2`, ...). The Analyst may only cite those ids. Plain code (`grounding.py`) then flags uncited observations, invented citations and competitors with no supporting finding, and the Critic sees those flags.
+**Understands the request first.** The Researcher reads the request before searching. It works out whether it is about a **market** (e.g. food delivery in Nepal), a **company** (Tesla), a **comparison** (eSewa vs Khalti) or a **topic** (AI adoption in banking), and plans different searches for each. If a request is too vague (e.g. "the best company") or ambiguous (e.g. "Mercury"), it asks one clarifying question and offers ready-to-run suggestions instead of guessing. Requests that are harmful or not business research are declined with a reason. Obvious cases are caught by code rules without a model call.
 
-**Quality you can see.** Each run ends with a quality report computed in code: citation coverage, distinct source domains, how many findings came from full pages, and any remaining citation problems. Every agent step is timed.
+**Stays on the market you asked about.** The Researcher first names the query's focus (for example *Nepal*, with local names such as *Kathmandu*), makes every search include it, and ranks results that mention it first. At most three general results are kept, marked as background, so a brief about Nepal is not built on global figures or on DoorDash and Uber Eats. Redacted figures such as `US$ ****` and table noise are removed from the evidence before the Analyst sees it.
+
+**Evidence first.** The Researcher numbers every finding (`F1`, `F2`, ...). The Analyst may only cite those ids. Plain code (`grounding.py`) then flags uncited observations, invented citations competitors with no supporting finding, competitors backed only by background findings, and masked figures, and the Critic sees those flags.
+
+**Quality you can see.** Each run ends with a quality report computed in code: citation coverage, how many findings are about the focus, distinct source domains, how many findings came from full pages, and any remaining citation problems. Every agent step is timed.
 
 **Choose your model.** A picker in the sidebar switches between **Claude on Amazon Bedrock** and **Groq**. Groq appears only when at least one Groq key is configured.
 
@@ -201,6 +205,8 @@ GitHub Actions runs two jobs on every pull request and on every push to `main`: 
 
 ---
 
+**Fails safely.** A failed search is skipped and noted in the trace, model calls time out, model output that breaks a limit is trimmed rather than fatal, and the app shows a short message instead of a traceback. Source pages are untrusted: the scraper never fetches private or cloud metadata addresses (also through redirects), and the agents are told to ignore instructions found inside sources.
+
 ## Project structure
 
 ```text
@@ -214,6 +220,8 @@ ai-research-assistant/
 │   ├── models.py                 # Pydantic contracts passed between agents
 │   ├── llm.py                    # Bedrock Claude, Groq with key rotation, FakeLLM
 │   ├── search.py                 # Tavily search and labelled sample data
+│   ├── intake.py                 # rules for requests that cannot be researched as asked
+│   ├── evidence.py               # evidence cleaning, focus matching and ranking
 │   ├── scraper.py                # robots.txt-aware page reading and passage choice
 │   ├── quality.py                # citation coverage and other evidence metrics
 │   ├── grounding.py              # citation checks in plain code
@@ -237,6 +245,7 @@ ai-research-assistant/
 - **Code checks what code can.** The revision limit, the two-competitor cap and citation validity are enforced in Python, not left to the model.
 - **Honest data labelling.** Sample data is marked in the data model, in the UI and in the exported brief. Missing information is listed rather than guessed.
 - **Polite, bounded scraping.** Pages are fetched only from search results, never crawled. `robots.txt` is respected, requests identify the app, and every fetch has a timeout and a size limit. Static HTML parsing (BeautifulSoup) keeps the image small; a headless browser was rejected as too heavy for the benefit.
+- **Ask rather than guess, but only when needed.** Whether a request is clear is decided in the same model call that plans the searches, so clear requests cost nothing extra. The prompt prefers answering whenever one sensible reading exists.
 - **Provider independence.** Agents depend only on a one-method `LLMClient` interface, so new providers can be added without touching the agents.
 
 ---
