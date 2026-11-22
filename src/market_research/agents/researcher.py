@@ -1,6 +1,8 @@
 """Researcher: plans focused searches and turns results into numbered findings."""
 
+import html
 import logging
+from urllib.parse import urlsplit
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -33,6 +35,13 @@ logger = logging.getLogger(__name__)
 
 MAX_FINDINGS = 10
 MAX_CLAIM_CHARS = 600
+
+
+def url_key(url: str) -> str:
+    """One key per page: 'https://a.com/x?p=1&amp;q=2#top' and 'https://a.com/x/?p=1&q=2' match."""
+    parts = urlsplit(html.unescape(url).strip())
+    path = parts.path.rstrip("/") or "/"
+    return f"{parts.netloc.lower().removeprefix('www.')}{path}?{parts.query}"
 
 
 class SearchPlan(BaseModel):
@@ -144,7 +153,7 @@ class Researcher:
                 failed[search_query] = type(exc).__name__
                 continue
             for result in found:
-                key = result.url or result.title
+                key = url_key(result.url) if result.url else result.title
                 if key in seen:
                     continue
                 seen.add(key)

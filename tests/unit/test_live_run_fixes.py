@@ -92,3 +92,18 @@ def test_social_posts_rank_after_other_sources() -> None:
 def test_prompt_keeps_rivals_out_of_the_focus_and_asks_for_a_clear_decline_reason() -> None:
     assert "Never add their" in RESEARCHER_SYSTEM and "rivals to the focus" in RESEARCHER_SYSTEM
     assert "not business research" in RESEARCHER_SYSTEM
+
+
+def test_same_page_under_two_urls_is_kept_once() -> None:
+    from market_research.agents.researcher import url_key
+
+    a = "https://www.businessinsider.com/ai-banks?x=1&amp;y=2"
+    b = "https://businessinsider.com/ai-banks/?x=1&y=2#top"
+    assert url_key(a) == url_key(b)
+    results = [
+        SearchResult(title="BI", url=a, content="Banks adopt AI in banking."),
+        SearchResult(title="BI", url=b, content="Banks adopt AI in banking."),
+    ]
+    llm = FakeLLM([{"kind": "topic", "focus": ["banking"], "queries": ["AI banking"]}])
+    state = Researcher(llm, FakeSearch(results)).run(ResearchState(query="AI adoption in banking"))
+    assert len(state.findings) == 1

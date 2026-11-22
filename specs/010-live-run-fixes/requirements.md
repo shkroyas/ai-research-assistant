@@ -20,6 +20,7 @@ Specs 005 to 009 were checked live on Claude (Bedrock) and Groq with six request
 - **R4** A Bedrock model that rejects temperature is remembered for the rest of the process, and the message is logged at info level.
 - **R5** Icon words and emoji are removed from evidence, text that does not read as prose is dropped, and social media posts rank after other on-focus sources.
 - **R6** A declined request gets a one-sentence reason that says why.
+- **R7** The same page under two URLs (`&amp;` versus `&`, `www.`, a trailing slash or a `#fragment`) becomes one finding.
 
 ## Traceability
 
@@ -29,9 +30,10 @@ Specs 005 to 009 were checked live on Claude (Bedrock) and Groq with six request
 | R2 | `grounding.check_grounding`, `prompts.ANALYST_SYSTEM` | `test_company_cannot_be_its_own_competitor` |
 | R3, R6 | `prompts.RESEARCHER_SYSTEM` | `test_prompt_keeps_rivals_out_of_the_focus_and_asks_for_a_clear_decline_reason` |
 | R4 | `BedrockClaudeClient` | `test_models_that_reject_temperature_fall_back_to_their_default` |
+| R7 | `researcher.url_key` | `test_same_page_under_two_urls_is_kept_once` |
 | R5 | `evidence.clean_evidence`, `evidence.looks_like_prose`, `evidence.rank_results` | `test_page_noise_is_removed`, `test_social_posts_rank_after_other_sources` |
 
 ## Tasks
 
 - [x] **T1** Fixes and tests for R1 to R6.
-- [ ] **T2** Re-run "Research Tesla and its main competitors" and "AI adoption in banking" on Groq.
+- [x] **T2** Re-run on Groq: Tesla is now a company request with BYD and Volkswagen as competitors (approved); AI in banking focuses on banking (approved); the poem decline gives a clear reason.
