@@ -61,4 +61,4 @@ All tests are in `tests/unit/test_audit_fixes.py`.
 - [x] **T4** Live check: the IFC Nepal digital payments PDF now gives a prose passage about NRB and UPI instead of its abbreviations page.
 - [x] **T5** Regenerated the sample on Bedrock (Claude Opus 4.6). Searches now ask for 2026 data, there are no duplicate findings or doubled citations, no table headers, and the Critic approved with 9 of 10 findings cited.
 - [x] **T6** Social posts are dropped when at least five other on-focus results exist (194 tests).
-- [ ] **T7** Regenerate the sample on Bedrock and check it has no social posts.
+- [x] **T7** Regenerated the sample on Bedrock (best of two runs): approved after 1 revision, 10 findings from 9 sites, 80% coverage, no social posts, no doubled citations or duplicate sources.
