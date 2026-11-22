@@ -134,9 +134,11 @@ def evidence_tab(state: ResearchState) -> None:
     ]
     if state.focus:
         st.caption(
-            f"Focus: **{', '.join(state.focus)}**. Findings that do not mention it are kept as "
-            "background only."
+            f"Request type: **{state.kind}**. Focus: **{', '.join(state.focus)}**. Findings "
+            "that do not mention it are kept as background only."
         )
+    else:
+        st.caption(f"Request type: **{state.kind}**. No specific place or company to focus on.")
     st.caption(
         "Raw evidence passed to the Analyst. *Scraped page* means the passage was read from the "
         "source page itself; *search snippet* means the page could not be used."
@@ -179,6 +181,9 @@ def quality_tab(state: ResearchState) -> None:
         cols[2].metric("Source domains", len(q.domains))
         cols[3].metric("Full pages read", q.scraped_pages)
         cols[4].metric("Snippets used", q.search_snippets + q.sample_findings)
+        st.caption(
+            f"Request type: {q.kind}. Focus: {', '.join(q.focus) or 'none (general request)'}."
+        )
         if q.domains:
             st.caption("Domains: " + ", ".join(q.domains))
         if q.grounding_problems:
@@ -231,6 +236,35 @@ def export_tab(state: ResearchState) -> None:
     )
     with st.expander("Preview Markdown"):
         st.code(brief_to_markdown(state), language="markdown")
+
+
+def clarify(state: ResearchState, on_pick) -> None:
+    """Shown instead of a brief when a request is unclear or cannot be researched."""
+    intake = state.intake
+    if intake.status == "unclear":
+        st.info(
+            "**I need a little more detail before researching.**\n\n"
+            + (intake.question or "Which market, company or topic do you mean?")
+        )
+    else:
+        st.warning(f"**I can't research this request.** {intake.reason}".strip())
+        st.caption(
+            "I research markets, companies, comparisons between companies, and business or "
+            "technology topics."
+        )
+    if intake.status == "unclear" and intake.reason:
+        st.caption(intake.reason)
+    if intake.suggestions:
+        st.markdown("**Try one of these, or rephrase above:**")
+        cols = st.columns(len(intake.suggestions))
+        for i, (col, suggestion) in enumerate(zip(cols, intake.suggestions, strict=True)):
+            col.button(
+                suggestion,
+                key=f"suggestion_{i}",
+                on_click=on_pick,
+                args=(suggestion,),
+                width="stretch",
+            )
 
 
 def results(state: ResearchState, model_label: str) -> None:

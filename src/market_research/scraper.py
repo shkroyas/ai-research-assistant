@@ -6,7 +6,10 @@ relevant to the query. It never raises: a page that cannot be used returns a
 ScrapeResult with ok=False and a reason, and the Researcher keeps the snippet.
 """
 
+import ipaddress
 import re
+import socket
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlsplit
 from urllib.robotparser import RobotFileParser
@@ -35,24 +38,32 @@ BOILERPLATE_TAGS = (
 MIN_PARAGRAPH_CHARS = 60
 MAX_PASSAGE_CHARS = 600
 STOP_WORDS = {
-    "a",
-    "an",
-    "analyse",
-    "analyze",
-    "and",
-    "are",
-    "for",
-    "from",
-    "in",
-    "is",
-    "of",
-    "on",
-    "or",
-    "the",
-    "to",
-    "what",
-    "with",
-}
+    "a", "about", "an", "analyse", "analyze", "and", "are", "compare", "comparison",
+    "does", "for", "from", "give", "how", "in", "is", "me", "of", "on", "or",
+    "overview", "research", "tell", "the", "to", "versus", "vs", "what", "which",
+    "who", "why", "with",
+}  # fmt: skip
+
+
+def is_public_host(host: str, resolve: Callable[..., list] = socket.getaddrinfo) -> bool:
+    """False when a host is, or resolves to, a private, loopback or link-local address.
+
+    Search results are untrusted, so a result (or a redirect) pointing at
+    localhost or a cloud metadata address such as 169.254.169.254 is never fetched.
+    A name that does not resolve is left to the HTTP client, which will fail on it.
+    """
+    host = host.strip("[]").lower()
+    if not host or host == "localhost" or host.endswith((".localhost", ".internal", ".local")):
+        return False
+    try:
+        addresses = [ipaddress.ip_address(host)]
+    except ValueError:
+        try:
+            infos = resolve(host, None)
+        except (OSError, UnicodeError):
+            return True
+        addresses = [ipaddress.ip_address(info[4][0].split("%")[0]) for info in infos]
+    return all(address.is_global for address in addresses)
 
 
 class ScrapeResult(BaseModel):
@@ -123,6 +134,7 @@ class PageScraper:
         timeout: float = 8.0,
         max_bytes: int = 2_000_000,
         max_workers: int = 4,
+        resolve: Callable[..., list] = socket.getaddrinfo,
     ) -> None:
         self._client = client or httpx.Client(
             timeout=timeout,
@@ -130,6 +142,12 @@ class PageScraper:
             headers={"User-Agent": USER_AGENT, "Accept": "text/html,application/xhtml+xml"},
         )
         self._client.headers["User-Agent"] = USER_AGENT
+        self._resolve = resolve
+        # Checked on every request, so a redirect cannot lead to a private address either.
+        self._client.event_hooks["request"] = [
+            *self._client.event_hooks.get("request", []),
+            self._check_public,
+        ]
         self.max_bytes = max_bytes
         self.max_workers = max_workers
         self._robots: dict[str, RobotFileParser | None] = {}
@@ -165,6 +183,10 @@ class PageScraper:
         except httpx.HTTPError as exc:
             return ScrapeResult(url=url, ok=False, reason=f"request failed: {type(exc).__name__}")
 
+    def _check_public(self, request: httpx.Request) -> None:
+        if not is_public_host(request.url.host, self._resolve):
+            raise _Skip("not a public address")
+
     def _fetch_html(self, url: str) -> str:
         with self._client.stream("GET", url) as response:
             if response.status_code >= 400:
@@ -192,7 +214,7 @@ class PageScraper:
                     parser = None  # no robots.txt: everything is allowed
                 else:
                     parser.parse(response.text.splitlines())  # type: ignore[union-attr]
-            except httpx.HTTPError:
+            except (httpx.HTTPError, _Skip):
                 parser = None
             self._robots[site] = parser
         return self._robots[site]

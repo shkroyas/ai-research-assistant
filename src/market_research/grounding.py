@@ -21,8 +21,12 @@ def cited_ids(text: str) -> set[str]:
     return ids
 
 
-def check_grounding(brief: Brief, findings: list[Finding]) -> list[str]:
-    """Return human-readable problems; an empty list means the brief is grounded."""
+def check_grounding(brief: Brief, findings: list[Finding], kind: str = "market") -> list[str]:
+    """Return human-readable problems; an empty list means the brief is grounded.
+
+    For market and topic requests a competitor must be backed by a finding about the
+    focus. For company and comparison requests a rival's own findings are enough.
+    """
     known = {f.id for f in findings}
     problems: list[str] = []
 
@@ -47,7 +51,7 @@ def check_grounding(brief: Brief, findings: list[Finding]) -> list[str]:
         problems.append("Brief quotes a redacted or masked figure (e.g. 'US$ ****')")
 
     by_id = {f.id: f for f in findings}
-    for competitor in brief.competitors:
+    for competitor in brief.competitors if kind in ("market", "topic") else []:
         support = [by_id[i] for i in competitor.finding_ids if i in by_id]
         if support and not any(f.on_focus for f in support):
             problems.append(

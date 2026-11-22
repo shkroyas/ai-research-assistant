@@ -15,10 +15,13 @@ MASKED = re.compile(r"\*{2,}|█")
 TABLE_RULE = re.compile(r"\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?")
 SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 MAX_BACKGROUND = 3
+# Words that mean "everywhere": a request about the whole world has no focus.
+GLOBAL_WORDS = {"global", "globally", "world", "worldwide", "international", "the world"}
+COMPARISON = re.compile(r"\b(compare|comparison|versus|vs\.?)\b", re.IGNORECASE)
 
 # Words that start a request rather than name a place or company.
 NOT_NAMES = {
-    "analyse", "analyze", "assess", "compare", "describe", "explain", "give", "how",
+    "analyse", "analyze", "assess", "compare", "describe", "explain", "give", "global", "how",
     "industry", "market", "research", "show", "summarise", "summarize", "tell", "the",
     "what", "which", "who", "why",
 }  # fmt: skip
@@ -49,6 +52,21 @@ def fallback_focus(query: str) -> list[str]:
         rest = groups[0][1][1:]
         groups = ([(False, rest)] if rest else []) + groups[1:]
     return [" ".join(words) for _, words in groups]
+
+
+def clean_focus(focus: Iterable[str]) -> list[str]:
+    """Strip, de-duplicate and drop words that mean 'everywhere' from focus terms."""
+    kept: list[str] = []
+    for term in focus:
+        term = " ".join(term.split())
+        if term and term.lower() not in GLOBAL_WORDS and term.lower() not in map(str.lower, kept):
+            kept.append(term)
+    return kept
+
+
+def fallback_kind(query: str) -> str:
+    """Guess the request type when planning fails: comparisons are easy to spot."""
+    return "comparison" if COMPARISON.search(query) else "market"
 
 
 def mentions_focus(texts: Iterable[str | None], focus: list[str]) -> bool:

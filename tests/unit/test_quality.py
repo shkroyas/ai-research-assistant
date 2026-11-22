@@ -66,4 +66,4 @@ def test_assess_counts_findings_about_the_focus() -> None:
     items[1].on_focus = False
     state = ResearchState(query="q", findings=items, focus=["Nepal"])
     report = assess(state)
-    assert (report.on_focus, report.focus) == (3, ["Nepal"])
+    assert (report.on_focus, report.focus, report.kind) == (3, ["Nepal"], "market")

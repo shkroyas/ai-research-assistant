@@ -21,7 +21,7 @@ def format_findings(findings: list[Finding]) -> str:
 
 def focus_line(state: ResearchState) -> str:
     focus = ", ".join(state.focus) if state.focus else "(none named)"
-    return f"Focus: {focus}"
+    return f"Request type: {state.kind}\nFocus: {focus}"
 
 
 def build_sources(brief: Brief, findings: list[Finding]) -> list[str]:

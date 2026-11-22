@@ -17,7 +17,7 @@ class Critic:
         if state.draft is None:
             raise ValueError("Critic needs a draft brief")
 
-        problems = check_grounding(state.draft, state.findings)
+        problems = check_grounding(state.draft, state.findings, state.kind)
         prompt = (
             f"User request: {state.query}\n{focus_line(state)}"
             f"\n\nFindings:\n{format_findings(state.findings)}"

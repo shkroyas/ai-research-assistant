@@ -29,7 +29,7 @@ def test_researcher_falls_back_to_raw_query_when_planning_fails() -> None:
 def test_researcher_keeps_sample_data_label() -> None:
     sample = [SearchResult(title="Sample: x", content="c", is_sample_data=True)]
     state = Researcher(FakeLLM([{"queries": ["q"]}]), FakeSearch(sample)).run(
-        ResearchState(query="q")
+        ResearchState(query="Nepal food delivery")
     )
     assert state.uses_sample_data
 
@@ -107,6 +107,6 @@ def test_analyst_prompt_names_focus_and_labels_background(good_brief) -> None:
     )
     Analyst(llm).run(state)
     prompt = llm.calls[0]["prompt"]
-    assert "Focus: Nepal" in prompt
+    assert "Request type: market\nFocus: Nepal" in prompt
     assert "F2 [BACKGROUND]: Global market grows" in prompt
     assert "F1: Foodmandu leads Nepal" in prompt

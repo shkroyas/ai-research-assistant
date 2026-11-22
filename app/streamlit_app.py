@@ -1,5 +1,6 @@
 """Streamlit front end for the multi-agent market research assistant."""
 
+import logging
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -7,17 +8,21 @@ import streamlit as st
 
 from market_research import pipeline
 from market_research.config import Settings
+from market_research.intake import MAX_QUERY_CHARS
 from market_research.llm import PROVIDER_LABELS, LLMError, available_providers
 from market_research.models import ResearchState
 from ui import components
 from ui.text import short
 
+logger = logging.getLogger(__name__)
+
 st.set_page_config(page_title="AI Research Assistant", page_icon="🔎", layout="wide")
 
 EXAMPLES = [
     "Analyze the food delivery market in Nepal",
-    "Electric vehicle market in India",
-    "Fintech digital wallets in Southeast Asia",
+    "Research Tesla and its main competitors",
+    "Compare eSewa and Khalti digital wallets in Nepal",
+    "AI adoption in banking",
 ]
 MAX_HISTORY = 10
 EXPECTED_STEPS = 5  # Orchestrator, Researcher, Analyst, Critic, Orchestrator (no revision)
@@ -121,9 +126,17 @@ def run_research(query: str, settings: Settings, provider: str) -> Run | None:
 
             state = orchestrator.run(query, on_step=on_step)
             progress.progress(1.0)
-            status.update(label="Research complete", state="complete", expanded=False)
+            label = "Research complete" if state.intake.proceed else "Stopped before research"
+            status.update(label=label, state="complete", expanded=False)
     except LLMError as exc:
         st.error(f"The model could not complete the request: {exc}")
+        return None
+    except Exception:  # never show a traceback: explain, log, and keep the page usable
+        logger.exception("Research run failed")
+        st.error(
+            "Something went wrong while researching this request. Please try again, or try "
+            "another model. The details are in the app log."
+        )
         return None
     return Run(state=state, model_label=PROVIDER_LABELS[provider], finished_at=datetime.now())
 
@@ -153,7 +166,10 @@ def main() -> None:
     with st.form("query", border=False):
         col_input, col_button = st.columns([5, 1], vertical_alignment="bottom")
         query = col_input.text_input(
-            "Company or industry", key="query_input", placeholder=EXAMPLES[0]
+            "Market, company or topic",
+            key="query_input",
+            placeholder=EXAMPLES[0],
+            max_chars=MAX_QUERY_CHARS,
         )
         submitted = col_button.form_submit_button("Run research", type="primary", width="stretch")
 
@@ -166,6 +182,10 @@ def main() -> None:
             st.warning("Please enter a company or industry.")
         else:
             run = run_research(query, settings, provider)
+            if run is not None and not run.state.intake.proceed:
+                # Ask for clarity or explain the refusal; nothing is added to the history.
+                components.clarify(run.state, pick_example)
+                return
             if run is not None:
                 history: list[Run] = st.session_state["history"]
                 history.insert(0, run)

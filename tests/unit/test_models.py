@@ -4,10 +4,16 @@ from pydantic import ValidationError
 from market_research.models import Brief, Competitor, Finding, ResearchState
 
 
-def test_brief_allows_at_most_two_competitors() -> None:
+def test_brief_keeps_at_most_two_competitors() -> None:
     competitors = [Competitor(name=f"C{i}", note="n") for i in range(3)]
-    with pytest.raises(ValidationError):
-        Brief(summary="s", competitors=competitors)
+    brief = Brief(summary="s", competitors=competitors)  # extras are trimmed, not fatal
+    assert [c.name for c in brief.competitors] == ["C0", "C1"]
+
+
+def test_brief_drops_blank_lines_and_query_drops_control_characters() -> None:
+    brief = Brief(summary="s", observations=["a [F1]", "  ", ""], missing_information=[""])
+    assert (brief.observations, brief.missing_information) == (["a [F1]"], [])
+    assert ResearchState(query="EV\x00 market\n in  Nepal").query == "EV market in Nepal"
 
 
 def test_brief_round_trips_through_json() -> None:

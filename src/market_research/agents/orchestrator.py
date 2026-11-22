@@ -46,6 +46,14 @@ class Orchestrator:
         notify(self.name, state)
 
         state = step(self.researcher, state)
+        if not state.intake.proceed:
+            # Unclear or declined: ask or explain instead of writing a brief from guesses.
+            state.duration_ms = round((time.perf_counter() - run_started) * 1000)
+            state.log(self.name, "stopped before research", status=state.intake.status)
+            state.trace[-1].duration_ms = state.duration_ms
+            notify(self.name, state)
+            return state
+
         state = step(self.analyst, state)
         state = step(self.critic, state)
 
