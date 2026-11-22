@@ -287,7 +287,12 @@ ai-research-assistant/
 ├── samples/                      # example output brief
 ├── specs/                        # requirements, design and tasks per feature
 ├── tests/                        # offline unit and integration tests
+├── infra/
+│   ├── terraform/                # AWS: network, ALB, ECS Fargate, ECR, secret, IAM, budget
+│   ├── deploy.sh                 # first deploy from a machine with AWS credentials
+│   └── teardown.sh               # removes everything (terraform destroy)
 ├── .github/workflows/ci.yml      # lint, tests and Docker build on every PR
+├── .github/workflows/deploy.yml  # rolls out to ECS after CI passes on main (OIDC)
 ├── Dockerfile, docker-compose.yml
 ├── .env.example                  # configuration template, no secrets
 └── pyproject.toml

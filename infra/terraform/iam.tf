@@ -70,6 +70,8 @@ resource "aws_iam_openid_connect_provider" "github" {
 }
 
 locals {
+  github_owner    = split("/", var.github_repo)[0]
+  github_name     = split("/", var.github_repo)[1]
   github_oidc_arn = var.create_github_oidc_provider ? aws_iam_openid_connect_provider.github[0].arn : "arn:aws:iam::${local.account_id}:oidc-provider/token.actions.githubusercontent.com"
 }
 
@@ -88,7 +90,12 @@ data "aws_iam_policy_document" "github_assume" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repo}:ref:refs/heads/main"]
+      # GitHub sends either the classic subject or, for repositories that use
+      # immutable ids, owner@owner_id/name@repo_id. Both are main only.
+      values = [
+        "repo:${var.github_repo}:ref:refs/heads/main",
+        "repo:${local.github_owner}@${var.github_owner_id}/${local.github_name}@${var.github_repo_id}:ref:refs/heads/main",
+      ]
     }
   }
 }
