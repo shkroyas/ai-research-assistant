@@ -4,6 +4,13 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-22
+
+### Added
+
+- AWS deployment (spec 003): Terraform in `infra/terraform/` for ECS Fargate behind an Application Load Balancer, with ECR, Secrets Manager for the Groq and Tavily keys, a task role limited to `bedrock:InvokeModel` on the chosen model, CloudWatch Logs and a $30 monthly budget alert. `infra/deploy.sh` does the first deploy and `infra/teardown.sh` removes everything.
+- GitHub Actions deploy (`deploy.yml`): after CI passes on `main`, the image is built, pushed to ECR and rolled out to ECS through OIDC, with no AWS keys stored in GitHub.
+
 ### Fixed
 
 - Fixes from the full audit (spec 011):
@@ -58,5 +65,6 @@ All notable changes to this project are recorded here. The format follows [Keep 
   - Brief, Evidence, Quality, Agent trace and Export tabs, with citations linked to their sources;
   - sidebar controls and run history.
 
-[Unreleased]: https://github.com/shkroyas/ai-research-assistant/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/shkroyas/ai-research-assistant/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/shkroyas/ai-research-assistant/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/shkroyas/ai-research-assistant/releases/tag/v1.0.0
