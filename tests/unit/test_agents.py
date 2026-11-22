@@ -91,3 +91,22 @@ def test_analyst_handles_empty_findings() -> None:
     empty = Brief(summary="No evidence found.", missing_information=["Everything"])
     state = Analyst(FakeLLM([empty])).run(ResearchState(query="q"))
     assert state.draft is not None and state.draft.sources == []
+
+
+def test_analyst_prompt_names_focus_and_labels_background(good_brief) -> None:
+    from market_research.models import Finding
+
+    llm = FakeLLM([good_brief])
+    state = ResearchState(
+        query="Analyze the food delivery market in Nepal",
+        focus=["Nepal"],
+        findings=[
+            Finding(id="F1", claim="Foodmandu leads Nepal", source_title="K"),
+            Finding(id="F2", claim="Global market grows", source_title="G", on_focus=False),
+        ],
+    )
+    Analyst(llm).run(state)
+    prompt = llm.calls[0]["prompt"]
+    assert "Focus: Nepal" in prompt
+    assert "F2 [BACKGROUND]: Global market grows" in prompt
+    assert "F1: Foodmandu leads Nepal" in prompt

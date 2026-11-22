@@ -32,3 +32,33 @@ def test_flags_uncited_and_invented_citations() -> None:
     assert any("unknown finding F7" in p for p in problems)
     assert any("Summary cites unknown finding F9" in p for p in problems)
     assert any("'Ghost' has no supporting finding" in p for p in problems)
+
+
+def test_masked_figures_are_flagged() -> None:
+    from market_research.models import Brief, Finding
+
+    findings = [Finding(id="F1", claim="x", source_title="A")]
+    brief = Brief(summary="Revenue is US$ ****** million [F1].", observations=["Fact [F1]"])
+    assert any("masked figure" in p for p in check_grounding(brief, findings))
+
+
+def test_competitor_backed_only_by_background_is_flagged() -> None:
+    from market_research.models import Brief, Competitor, Finding
+
+    findings = [
+        Finding(id="F1", claim="DoorDash leads the US", source_title="G", on_focus=False),
+        Finding(id="F2", claim="Foodmandu leads Nepal", source_title="K"),
+    ]
+    brief = Brief(
+        summary="s [F2]",
+        observations=["o [F2]"],
+        competitors=[
+            Competitor(name="DoorDash", note="global", finding_ids=["F1"]),
+            Competitor(name="Foodmandu", note="local", finding_ids=["F2"]),
+        ],
+    )
+    problems = check_grounding(brief, findings)
+    assert problems == [
+        "Competitor 'DoorDash' is supported only by background findings that do not mention "
+        "the focus"
+    ]

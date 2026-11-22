@@ -12,9 +12,16 @@ def format_findings(findings: list[Finding]) -> str:
     lines = []
     for f in findings:
         label = " [SAMPLE DATA]" if f.is_sample_data else ""
+        if not f.on_focus:
+            label += " [BACKGROUND]"
         source = f.source_url or "no URL"
         lines.append(f"{f.id}{label}: {f.claim}\n    Source: {f.source_title} ({source})")
     return "\n".join(lines)
+
+
+def focus_line(state: ResearchState) -> str:
+    focus = ", ".join(state.focus) if state.focus else "(none named)"
+    return f"Focus: {focus}"
 
 
 def build_sources(brief: Brief, findings: list[Finding]) -> list[str]:
@@ -37,7 +44,10 @@ class Analyst:
 
     def run(self, state: ResearchState) -> ResearchState:
         revising = state.critique is not None and not state.critique.approved
-        prompt = f"User request: {state.query}\n\nFindings:\n{format_findings(state.findings)}"
+        prompt = (
+            f"User request: {state.query}\n{focus_line(state)}"
+            f"\n\nFindings:\n{format_findings(state.findings)}"
+        )
         if revising and state.draft is not None and state.critique is not None:
             prompt += (
                 f"\n\nYour previous draft:\n{state.draft.model_dump_json(indent=2)}"

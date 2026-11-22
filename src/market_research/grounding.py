@@ -7,6 +7,7 @@ backed by evidence.
 
 import re
 
+from market_research.evidence import MASKED
 from market_research.models import Brief, Finding
 
 CITATION_PATTERN = re.compile(r"\[(F\d+(?:\s*,\s*F\d+)*)\]")
@@ -40,5 +41,18 @@ def check_grounding(brief: Brief, findings: list[Finding]) -> list[str]:
             problems.append(f"Competitor {competitor.name!r} has no supporting finding")
         for unknown in sorted(set(competitor.finding_ids) - known):
             problems.append(f"Competitor {competitor.name!r} cites unknown finding {unknown}")
+
+    texts = [brief.summary, *brief.observations, *(c.note for c in brief.competitors)]
+    if any(MASKED.search(text) for text in texts):
+        problems.append("Brief quotes a redacted or masked figure (e.g. 'US$ ****')")
+
+    by_id = {f.id: f for f in findings}
+    for competitor in brief.competitors:
+        support = [by_id[i] for i in competitor.finding_ids if i in by_id]
+        if support and not any(f.on_focus for f in support):
+            problems.append(
+                f"Competitor {competitor.name!r} is supported only by background findings "
+                "that do not mention the focus"
+            )
 
     return problems

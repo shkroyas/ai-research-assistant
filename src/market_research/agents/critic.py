@@ -1,6 +1,6 @@
 """Critic: checks the draft against the evidence and approves or asks for a revision."""
 
-from market_research.agents.analyst import format_findings
+from market_research.agents.analyst import focus_line, format_findings
 from market_research.grounding import check_grounding
 from market_research.llm import LLMClient, complete_json
 from market_research.models import Critique, ResearchState
@@ -19,7 +19,8 @@ class Critic:
 
         problems = check_grounding(state.draft, state.findings)
         prompt = (
-            f"User request: {state.query}\n\nFindings:\n{format_findings(state.findings)}"
+            f"User request: {state.query}\n{focus_line(state)}"
+            f"\n\nFindings:\n{format_findings(state.findings)}"
             f"\n\nDraft brief:\n{state.draft.model_dump_json(indent=2)}"
         )
         if problems:
