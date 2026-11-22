@@ -14,7 +14,7 @@ Requirements use ids such as `R1.2`. Tasks and tests refer back to those ids, so
 | --- | --- |
 | [001 Research brief](001-research-brief/requirements.md) | Done (PRs #1 to #8) |
 | [002 Release v1.0.0](002-release-v1/requirements.md) | Done except the tag |
-| [003 AWS deployment](003-aws-deployment/requirements.md) | Proposed |
+| [003 AWS deployment](003-aws-deployment/requirements.md) | Built, first deploy pending |
 | [004 Deeper evidence and a complete app](004-evidence-and-app/requirements.md) | Done |
 | [005 Market focus and evidence hygiene](005-market-focus/requirements.md) | Done, checked live |
 | [006 Query types](006-query-types/requirements.md) | Done, checked live |

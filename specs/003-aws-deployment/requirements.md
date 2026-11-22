@@ -1,6 +1,6 @@
 # 003 AWS deployment: requirements
 
-**Status:** Proposed. Not started.
+**Status:** Built. Design in [design.md](design.md), cost in [cost.md](cost.md), tasks in [tasks.md](tasks.md).
 
 ## Goal
 
