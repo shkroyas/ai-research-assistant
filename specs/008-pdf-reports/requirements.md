@@ -28,4 +28,4 @@ Search results often include PDF reports (for example consulting or industry rep
 
 - [x] **T1** Setting, sidebar switch and pipeline wiring.
 - [x] **T2** PDF text extraction with `pypdf`, page and size limits, and tests with a generated PDF.
-- [ ] **T3** Live check on a real report with the switch on and off.
+- [x] **T3** Live check on the Accenture banking report: off keeps the snippet; on returns a relevant passage. Footnote numbers glued to figures ("$550 billion2") are now removed.

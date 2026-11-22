@@ -25,6 +25,8 @@ from market_research.evidence import MASKED, clean_evidence
 USER_AGENT = "ai-research-assistant/1.0 (+https://github.com/shkroyas/ai-research-assistant)"
 HTML_TYPES = ("text/html", "application/xhtml+xml")
 PDF_TYPE = "application/pdf"
+# A footnote number glued to a unit in PDF text, e.g. "billion2" or "%3".
+FOOTNOTE_MARK = re.compile(r"\b(thousand|million|billion|trillion|percent)\d{1,2}\b|(%)\d{1,2}\b")
 BOILERPLATE_TAGS = (
     "script",
     "style",
@@ -91,6 +93,9 @@ def pdf_paragraphs(data: bytes, max_pages: int) -> list[str]:
     paragraphs: list[str] = []
     for page in pages:
         text = " ".join(page.replace("-\n", "").split())
+        text = FOOTNOTE_MARK.sub(
+            lambda m: m.group(1) or m.group(2), text
+        )  # "billion2" -> "billion"
         chunk = ""
         for sentence in re.split(r"(?<=[.!?])\s+", text):
             chunk = f"{chunk} {sentence}".strip()

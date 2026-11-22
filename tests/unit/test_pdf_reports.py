@@ -70,3 +70,9 @@ def test_broken_or_oversized_pdfs_report_a_reason() -> None:
     assert broken.scrape("https://r.example/a.pdf", QUERY).reason == "PDF could not be read"
     big = scraper_for(make_pdf(TEXT), read_pdfs=True, max_pdf_bytes=100)
     assert big.scrape("https://r.example/b.pdf", QUERY).reason == "PDF larger than the size limit"
+
+
+def test_footnote_numbers_are_removed_from_figures() -> None:
+    lines = ["Fintech investment in banking reached $550 billion2 and grew 40%3 in a decade."]
+    paragraphs = pdf_paragraphs(make_pdf(lines * 3), max_pages=5)
+    assert "$550 billion and grew 40% in" in paragraphs[0]
