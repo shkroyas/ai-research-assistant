@@ -16,6 +16,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
   - The scraper skips link lists ("Also, read: ...") and, in PDFs, abbreviation pages and over-long chunks.
   - The scraper's HTTP client is closed after each run and asks for PDFs when PDF reading is on.
   - Competitor notes no longer show the same citation twice.
+  - Social media posts are left out when at least five other on-focus sources exist.
 
 - User-facing text now says "market, company or topic" instead of "company or industry".
 

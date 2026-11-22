@@ -1,6 +1,6 @@
 # 011 Fixes from the full audit: requirements
 
-Status: done except R10 (two Facebook posts remain in the sample, see T5)
+Status: done, checked live
 
 ## Why
 
@@ -28,7 +28,7 @@ A full test and audit of `fix/market-focus` against the assignment brief (12 liv
 - **R7** HTML blocks that are mostly link text are skipped. PDF text with no sentence ends is cut into passages no longer than the passage limit, and a passage made mostly of all-caps abbreviations is skipped.
 - **R8** `PageScraper` can be closed and closes a client it created itself. The CLI and Streamlit close it after each run (through `Orchestrator.close`). When PDF reading is on, `Accept` includes `application/pdf`.
 - **R9** A competitor's finding ids are appended only when the note does not already cite them, in the app and in Markdown.
-- **R10** The sample brief in `samples/` is regenerated after R1 to R9 and contains no social posts or table headers.
+- **R10** Social posts are left out when at least five other on-focus results exist (they still rank last when sources are few). The sample brief in `samples/` is regenerated after R1 to R10 and contains no social posts or table headers.
 
 ## Out of scope
 
@@ -51,6 +51,7 @@ All tests are in `tests/unit/test_audit_fixes.py`.
 | R7 | `scraper.extract_paragraphs`, `scraper.pdf_text_chunks` | `test_link_lists_are_skipped`, `test_pdf_text_without_full_stops_is_cut_and_abbreviation_lists_are_skipped` |
 | R8 | `PageScraper.close`, `Researcher.close`, `Orchestrator.close` | `test_scraper_closes_its_own_client_only` |
 | R9 | `render.note_with_refs`, `ui.components.brief_tab` | `test_competitor_ids_are_added_only_when_missing` |
+| R10 | `evidence.rank_results`, `evidence.MIN_OTHER_SOURCES` | `test_social_posts_are_dropped_when_five_other_sources_exist`, `test_social_posts_are_kept_last_when_sources_are_few` |
 
 ## Tasks
 
@@ -59,4 +60,5 @@ All tests are in `tests/unit/test_audit_fixes.py`.
 - [x] **T3** `make lint` and `make test` pass (192 tests, 97% coverage).
 - [x] **T4** Live check: the IFC Nepal digital payments PDF now gives a prose passage about NRB and UPI instead of its abbreviations page.
 - [x] **T5** Regenerated the sample on Bedrock (Claude Opus 4.6). Searches now ask for 2026 data, there are no duplicate findings or doubled citations, no table headers, and the Critic approved with 9 of 10 findings cited.
-- [ ] **T6** R10 is not fully met: two Facebook posts are still cited (F8, a question in an expats group; F9, a post about Yango entering Nepal). Spec 010 keeps social posts and only ranks them last. Deciding whether to drop them when enough other on-focus findings exist is a follow-up.
+- [x] **T6** Social posts are dropped when at least five other on-focus results exist (194 tests).
+- [ ] **T7** Regenerate the sample on Bedrock and check it has no social posts.

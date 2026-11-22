@@ -17,6 +17,8 @@ BOLD = re.compile(r"\*\*(?=[^\s*])(.+?)(?<=[^\s*])\*\*")
 TABLE_RULE = re.compile(r"\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?")
 SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 MAX_BACKGROUND = 3
+# Social posts are dropped once this many other on-focus results exist.
+MIN_OTHER_SOURCES = 5
 # Icon-font ligatures and emoji that leak into page text, e.g. "arrow_forward 🍔".
 ICON_WORDS = re.compile(
     r"\b(?:arrow_(?:forward|back|upward|downward|drop_down)|chevron_(?:left|right)|"
@@ -156,8 +158,14 @@ def rank_results(
     limit: int,
     max_background: int = MAX_BACKGROUND,
 ) -> list[tuple[SearchResult, bool]]:
-    """On-focus results first (search order kept), then at most `max_background` others."""
+    """On-focus results first (search order kept), then at most `max_background` others.
+
+    Social posts rank after other sources, and are left out entirely when at least
+    MIN_OTHER_SOURCES other on-focus results exist.
+    """
     marked = [(r, mentions_focus([r.title, r.url, r.content], focus)) for r in results]
     on_focus = sorted((m for m in marked if m[1]), key=lambda m: is_social(m[0].url))
+    if sum(not is_social(r.url) for r, _ in on_focus) >= MIN_OTHER_SOURCES:
+        on_focus = [m for m in on_focus if not is_social(m[0].url)]
     background = [m for m in marked if not m[1]][:max_background]
     return (on_focus + background)[:limit]

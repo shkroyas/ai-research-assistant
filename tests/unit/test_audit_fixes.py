@@ -9,7 +9,7 @@ import pytest
 from market_research.agents import Analyst, Critic, Orchestrator, Researcher
 from market_research.agents.researcher import url_key
 from market_research.config import Settings, configure_logging
-from market_research.evidence import clean_evidence, has_masked
+from market_research.evidence import clean_evidence, has_masked, rank_results
 from market_research.grounding import check_grounding
 from market_research.llm import FakeLLM
 from market_research.models import Brief, Competitor, Finding, QualityReport, ResearchState
@@ -257,3 +257,25 @@ def test_scraper_closes_its_own_client_only() -> None:
 )
 def test_competitor_ids_are_added_only_when_missing(note, ids, expected) -> None:
     assert note_with_refs(Competitor(name="Foodmandu", note=note, finding_ids=ids)) == expected
+
+
+# --- R10: social posts are dropped when enough other sources exist ----------------
+
+
+def _nepal(url: str) -> SearchResult:
+    return SearchResult(title="Nepal", url=url, content="Food delivery in Nepal grows.")
+
+
+def test_social_posts_are_dropped_when_five_other_sources_exist() -> None:
+    others = [_nepal(f"https://news{i}.example.com/a") for i in range(5)]
+    results = [_nepal("https://www.facebook.com/groups/expats/1"), *others]
+    ranked = rank_results(results, ["Nepal"], limit=10)
+    assert [r.url for r, _ in ranked] == [r.url for r in others]
+
+
+def test_social_posts_are_kept_last_when_sources_are_few() -> None:
+    others = [_nepal(f"https://news{i}.example.com/a") for i in range(4)]
+    results = [_nepal("https://www.facebook.com/p/1"), *others]
+    ranked = rank_results(results, ["Nepal"], limit=10)
+    assert ranked[-1][0].url == "https://www.facebook.com/p/1"
+    assert len(ranked) == 5
