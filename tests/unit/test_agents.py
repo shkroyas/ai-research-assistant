@@ -11,10 +11,12 @@ def test_researcher_numbers_findings_and_dedupes(search_results) -> None:
     search = FakeSearch(search_results)
     llm = FakeLLM([{"queries": ["q1", "q2"]}])
     state = Researcher(llm, search).run(ResearchState(query="Nepal food delivery"))
-    assert search.queries == ["q1", "q2"]
+    # No focus from the model, so the capitalised name in the query is used and added.
+    assert search.queries == ["q1 Nepal", "q2 Nepal"]
     assert [f.id for f in state.findings] == ["F1", "F2"]  # same URLs in both searches
     assert state.findings[0].source_url == "https://a.example"
-    assert state.trace[0].detail["queries"] == ["q1", "q2"]
+    assert state.trace[0].detail["queries"] == ["q1 Nepal", "q2 Nepal"]
+    assert state.focus == ["Nepal"]
 
 
 def test_researcher_falls_back_to_raw_query_when_planning_fails() -> None:

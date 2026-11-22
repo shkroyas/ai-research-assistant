@@ -15,6 +15,8 @@ import httpx
 from bs4 import BeautifulSoup
 from pydantic import BaseModel
 
+from market_research.evidence import MASKED, clean_evidence
+
 USER_AGENT = "ai-research-assistant/1.0 (+https://github.com/shkroyas/ai-research-assistant)"
 HTML_TYPES = ("text/html", "application/xhtml+xml")
 BOILERPLATE_TAGS = (
@@ -80,21 +82,29 @@ def extract_paragraphs(html: str) -> list[str]:
     return paragraphs
 
 
-def best_passage(paragraphs: list[str], query: str) -> str | None:
-    """Pick the paragraph sharing most terms with the query; numbers add a small bonus."""
+def best_passage(
+    paragraphs: list[str], query: str, focus: list[str] | tuple[str, ...] = ()
+) -> str | None:
+    """Pick the paragraph sharing most terms with the query.
+
+    Paragraphs naming the focus (e.g. 'Nepal') score extra, numbers add a small bonus,
+    and paragraphs with masked figures ('US$ ****') are never chosen.
+    """
     terms = query_terms(query)
+    focus_terms = {t for f in focus for t in query_terms(f)}
+    paragraphs = [p for p in paragraphs if not MASKED.search(p)]
     if not paragraphs:
         return None
 
     def score(text: str) -> float:
         words = set(re.findall(r"[a-z0-9]+", text.lower()))
         has_number = bool(re.search(r"\d", text))
-        return len(terms & words) + (0.5 if has_number else 0.0)
+        return len(terms & words) + 2 * len(focus_terms & words) + (0.5 if has_number else 0.0)
 
     best = max(paragraphs, key=score)
     if terms and score(best) < 1:
         return None
-    return _trim(best)
+    return _trim(clean_evidence(best)) or None
 
 
 def _trim(text: str) -> str:
@@ -124,7 +134,9 @@ class PageScraper:
         self.max_workers = max_workers
         self._robots: dict[str, RobotFileParser | None] = {}
 
-    def scrape_many(self, urls: list[str], query: str) -> dict[str, ScrapeResult]:
+    def scrape_many(
+        self, urls: list[str], query: str, focus: list[str] | tuple[str, ...] = ()
+    ) -> dict[str, ScrapeResult]:
         unique = list(dict.fromkeys(u for u in urls if u))
         if not unique:
             return {}
@@ -132,17 +144,17 @@ class PageScraper:
         for url in unique:
             self._robots_for(url)
         with ThreadPoolExecutor(max_workers=self.max_workers) as pool:
-            results = pool.map(lambda u: self.scrape(u, query), unique)
+            results = pool.map(lambda u: self.scrape(u, query, focus), unique)
         return {r.url: r for r in results}
 
-    def scrape(self, url: str, query: str) -> ScrapeResult:
+    def scrape(self, url: str, query: str, focus: list[str] | tuple[str, ...] = ()) -> ScrapeResult:
         try:
             if urlsplit(url).scheme not in ("http", "https"):
                 return ScrapeResult(url=url, ok=False, reason="not an http(s) URL")
             if not self._allowed(url):
                 return ScrapeResult(url=url, ok=False, reason="disallowed by robots.txt")
             html = self._fetch_html(url)
-            passage = best_passage(extract_paragraphs(html), query)
+            passage = best_passage(extract_paragraphs(html), query, focus)
             if passage is None:
                 return ScrapeResult(url=url, ok=False, reason="no relevant passage on page")
             return ScrapeResult(url=url, ok=True, passage=passage)

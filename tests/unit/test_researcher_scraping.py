@@ -11,10 +11,10 @@ from tests.conftest import FakeSearch
 class FakeScraper:
     def __init__(self, pages: dict[str, ScrapeResult]) -> None:
         self.pages = pages
-        self.calls: list[tuple[list[str], str]] = []
+        self.calls: list[tuple[list[str], str, list[str]]] = []
 
-    def scrape_many(self, urls: list[str], query: str) -> dict[str, ScrapeResult]:
-        self.calls.append((urls, query))
+    def scrape_many(self, urls: list[str], query: str, focus=()) -> dict[str, ScrapeResult]:
+        self.calls.append((urls, query, list(focus)))
         return {u: self.pages[u] for u in urls if u in self.pages}
 
 
@@ -50,7 +50,7 @@ def test_scraped_passage_replaces_snippet_and_failures_keep_snippet() -> None:
 
     # URL-less results are not sent to the scraper; the query is.
     assert scraper.calls == [
-        (["https://www.a.example/1", "https://b.example/2"], "Nepal food delivery")
+        (["https://www.a.example/1", "https://b.example/2"], "Nepal food delivery", ["Nepal"])
     ]
 
     pages_step = next(t for t in state.trace if t.action == "read source pages")
@@ -89,3 +89,28 @@ def test_pipeline_attaches_scraper_only_when_enabled() -> None:
     off = pipeline.build_orchestrator(base.model_copy(update={"scrape_pages": False}), "groq")
     assert isinstance(on.researcher.scraper, PageScraper)
     assert off.researcher.scraper is None
+
+
+def test_researcher_ranks_focus_first_and_drops_masked_results() -> None:
+    results = [
+        SearchResult(
+            title="Global report", url="https://g.example/1", content="Global market grows 9%."
+        ),
+        SearchResult(
+            title="Statista", url="https://s.example/1", content="Revenue is US$ **** in ****."
+        ),
+        SearchResult(
+            title="Kathmandu Post", url="https://k.example/1", content="Foodmandu leads Nepal."
+        ),
+    ]
+    llm = FakeLLM([{"focus": ["Nepal"], "queries": ["food delivery market size"]}])
+    search = FakeSearch(results)
+    state = run(Researcher(llm, search), "Analyze the food delivery market in Nepal")
+
+    assert search.queries == ["food delivery market size Nepal"]
+    assert [(f.source_title, f.on_focus) for f in state.findings] == [
+        ("Kathmandu Post", True),
+        ("Global report", False),
+    ]
+    collected = state.trace[-1].detail
+    assert (collected["on_focus"], collected["dropped_unusable"]) == (1, 1)

@@ -32,6 +32,7 @@ class Finding(BaseModel):
     source_url: str | None = None
     is_sample_data: bool = False
     evidence: Evidence = "search snippet"
+    on_focus: bool = True  # False for general background that does not mention the focus
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -85,6 +86,8 @@ class QualityReport(BaseModel):
     scraped_pages: int = 0
     search_snippets: int = 0
     sample_findings: int = 0
+    on_focus: int = 0
+    focus: list[str] = Field(default_factory=list)
     grounding_problems: list[str] = Field(default_factory=list)
 
 
@@ -92,6 +95,7 @@ class ResearchState(BaseModel):
     """Shared state handed from agent to agent."""
 
     query: str
+    focus: list[str] = Field(default_factory=list)
     findings: list[Finding] = Field(default_factory=list)
     draft: Brief | None = None
     critique: Critique | None = None

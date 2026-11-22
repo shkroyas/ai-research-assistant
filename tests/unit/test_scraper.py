@@ -176,3 +176,13 @@ def test_scrape_many_deduplicates_and_reads_robots_once_per_site() -> None:
     assert sorted(results) == ["https://a.example/1", "https://a.example/2", "https://b.example/1"]
     assert all(r.ok for r in results.values())
     assert sorted(robots_reads) == ["a.example", "b.example"]
+
+
+def test_best_passage_prefers_focus_and_skips_masked_figures() -> None:
+    paragraphs = [
+        "The global food delivery market grew strongly in 2025 across many regions worldwide.",
+        "In Nepal, food delivery revenue is projected at US$ ****** million in ****.",
+        "Food delivery in Nepal is led by Foodmandu and Pathao, mostly in Kathmandu valley.",
+    ]
+    passage = best_passage(paragraphs, "food delivery market", focus=["Nepal"])
+    assert passage is not None and passage.startswith("Food delivery in Nepal is led by Foodmandu")

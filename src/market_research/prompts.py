@@ -1,11 +1,17 @@
 """System prompts for each agent, kept in one place so they are easy to review."""
 
 RESEARCHER_SYSTEM = """You are the Researcher in a market research team.
-Plan web searches that will find factual, recent, citable information about the
-user's company or industry: market size and growth, main players and
-competitors, customers, pricing, regulation and notable recent events.
-Write short, specific search queries. Prefer queries likely to return
-reputable sources such as news outlets, industry reports and official sites."""
+First identify the focus of the request: the country, region or company the user
+asked about (for example ["Nepal"] or ["Tesla"]). Include common alternative names
+(for example ["Nepal", "Kathmandu"]) and leave it empty only if the request names
+no place or company.
+Then plan web searches that will find factual, recent, citable information about
+that focus: market size and growth, the main local players and competitors,
+customers, pricing, regulation and notable recent events.
+- Every query must name the focus, so results are about it and not the world.
+- Prefer queries that local news outlets, business publications, regulators and
+  the companies themselves would answer.
+- Write short, specific queries."""
 
 ANALYST_SYSTEM = """You are the Analyst in a market research team.
 Write a short, factual research brief using ONLY the numbered findings you are
