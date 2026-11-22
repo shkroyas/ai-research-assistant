@@ -14,36 +14,56 @@
   "findings": [
     {
       "id": "F1",
-      "claim": "Share Sanskar on Facebook: \"Yango has officially entered Nepal\u2019s food delivery market, expanding its services beyond ride-sharin\u2026\" Yango has officially entered Nepal\u2019s food delivery market, expanding its services beyond ride-sharing and directly competing with established platforms Pathao and Foodmandu. This move marks a significant shift in the country\u2019s digital delivery sector, increasing competition and broadening choices for consumers. #fblifestyle",
-      "source_title": "Share Sanskar on Facebook: \"Yango has officially entered Nepal\u2019s food delivery market, expanding its services beyond ride-sharin\u2026\"",
-      "source_url": "https://www.facebook.com/sanskarshare/posts/yango-has-officially-entered-nepals-food-delivery-market-expanding-its-services-/979256038427798",
+      "claim": "Meals and groceries ordered online that are directly delivered by the restaurant, retailer, or platform no matter if ordered via a platform such as Delivery Hero and Instacart or a restaurant/retailer website such as Domino's and Walmart.com",
+      "source_title": "Online Food Delivery - Nepal | Statista Market Forecast",
+      "source_url": "https://www.statista.com/outlook/emo/online-food-delivery/nepal",
       "is_sample_data": false,
-      "evidence": "search snippet",
+      "evidence": "scraped page",
       "on_focus": true,
-      "domain": "facebook.com"
+      "domain": "statista.com"
     },
     {
       "id": "F2",
-      "claim": "Rank Company Details Short Description Total Funding Investors Tracxn Score 1st Logo for Bhoj Bhoj 2014, Kathmandu (Nepal), Unfunded Online platform to order food from restaurants - 56/100 2nd Logo for Foodmandu Foodmandu 2010, Kathmandu (Nepal), Series B On demand food ordering and delivery service in Nepal Team Ventures, True North Associates & 2 others 55/100 [...] 3rd Logo for BhojMandu BhojMandu 2020, Kathmandu (Nepal), Unfunded On-demand online food delivery platform - 45/100 4th Logo for Foodganj Foodganj 2020, Kathmandu (Nepal), Unfunded Online platform for food ordering and deliver...",
-      "source_title": "Foodmandu - 2026 Company Profile, Team, Funding & Competitors - Tracxn",
-      "source_url": "https://tracxn.com/d/companies/foodmandu/__gZGaNK2y4r4rVfW5IzDzYvUcgiRUzk7uIwGiIjmrnpo",
+      "claim": "Foodmandu is the fastest, easiest and most convenient way to enjoy the best food of your favourite restaurants at home, at the office or wherever you want to.",
+      "source_title": "Foodmandu: Food Delivery Service in Kathmandu, Pokhara, Chitwan, Butwal",
+      "source_url": "https://foodmandu.com",
+      "is_sample_data": false,
+      "evidence": "scraped page",
+      "on_focus": true,
+      "domain": "foodmandu.com"
+    },
+    {
+      "id": "F3",
+      "claim": "Something went wrong. Wait a moment and try again. Try again Please enable Javascript and refresh the page to continue",
+      "source_title": "Are there any reliable local delivery companies in Kathmandu, suitable for food delivery within Ring Road? - Quora",
+      "source_url": "https://www.quora.com/Are-there-any-reliable-local-delivery-companies-in-Kathmandu-suitable-for-food-delivery-within-Ring-Road",
+      "is_sample_data": false,
+      "evidence": "search snippet",
+      "on_focus": true,
+      "domain": "quora.com"
+    },
+    {
+      "id": "F4",
+      "claim": "edit-link Key facts about Kirana Pasal Logo of Kheti 2. Kheti edit-link Key facts about Kheti Logo of Hamro Allpasal 3. Hamro Allpasal edit-link Key facts about Hamro Allpasal Logo of Birgunj Online Mart 4. Birgunj Online Mart edit-link Key facts about Birgunj Online Mart Logo of Nimbus Bazar 5. Nimbus Bazar edit-link Key facts about Nimbus Bazar Companies founded year-on-year in the Online Grocery sector in Nepal [...] Investor Location Top Portfolio Companies Logo for British International Investment British International Investment London (United Kingdom) Logo for Rosebay Consulting Rose...",
+      "source_title": "List of 33 Online Grocery Startups in Nepal & Market Trends (Oct 2026) - Tracxn",
+      "source_url": "https://tracxn.com/d/explore/online-grocery-startups-in-nepal/__MxvYnzWio25tHM9UJnX_25nODxVz2MFDBYzUWzNkrGM",
       "is_sample_data": false,
       "evidence": "search snippet",
       "on_focus": true,
       "domain": "tracxn.com"
     },
     {
-      "id": "F3",
-      "claim": "Jhakaas Fast Food Kathmandu on Instagram: \"Thinking about what to eat today? \ud83d\udc40\ud83e\udd24 Your favorite meals are just a click away with exciting offers \u2026\" Thinking about what to eat today? \ud83d\udc40\ud83e\udd24 Your favorite meals are just a click away with exciting offers live on Bhoj, Foodmandu & Pathao\ud83d\udcaf Order now and make your day a little tastier\ud83d\ude0d\ud83c\udf1f #FoodOffers #Bhojdeals #Foodmandu #PathaoFoo#FoodOffers #Bhojdeals #Foodmandu #PathaoFoo#FoodLoversNepald #KathmanduFoodies #NepaliFood #OnlineFoodOrder #FoodDeals [...] [Image: Photo by Jhakaas Fast Food Kathmandu on December 30, 2025.] [Image: Photo by Jhakaas Fast Fo...",
-      "source_title": "Jhakaas Fast Food | Kathmandu on Instagram: \"Thinking about what to eat today? \ud83d\udc40\ud83e\udd24 Your favorite meals are just a click away with exciting offers \u2026\"",
-      "source_url": "https://www.instagram.com/p/DS6yUEFlJv4",
+      "id": "F5",
+      "claim": "Social Get our free apps Scribd - Download on the App Store Scribd - Get it on Google Play [...] Scribd The Growth of Foodmandu and Pathao Food in Nepal's Food Delivery Market The Growth of Foodmandu and Pathao Food in Nepal's Food Delivery Market The Growth of Foodmandu and Pathao Food in Nepal's Food Delivery Market AI-enhanced title Uploaded by Share this document Footer menu About Support Legal Social Get our free apps Scribd - Download on the App Store Scribd - Get it on Google Play About Legal Support Social",
+      "source_title": "The Growth of Foodmandu and Pathao Food in Nepal's Food Delivery Market | PDF",
+      "source_url": "https://www.scribd.com/document/1021186427/The-Growth-of-Foodmandu-and-Pathao-Food-in-Nepal-s-Food-Delivery-Market-docx-1-2",
       "is_sample_data": false,
       "evidence": "search snippet",
       "on_focus": true,
-      "domain": "instagram.com"
+      "domain": "scribd.com"
     },
     {
-      "id": "F4",
+      "id": "F6",
       "claim": "Foodmandu is a food delivery service operating in the food and beverage industry. The company provides a platform for customers to order food from various partner restaurants using their website, mobile app, or via telephone. Foodmandu serves urban customers seeking meal delivery. It was founded in 2010 and is based in Nepal.",
       "source_title": "Foodmandu - Products, Competitors, Financials, Employees, Headquarters Locations",
       "source_url": "https://www.cbinsights.com/company/foodmandu",
@@ -53,114 +73,95 @@
       "domain": "cbinsights.com"
     },
     {
-      "id": "F5",
-      "claim": "BHOJ (Previously Bhojdeals) is a One stop mobile app for all the foodies in Nepal, where they can search for their favourite restaurants, get food delivered to their home or office, get awesome deals when they dine-in at the restaurants, read and post restaurant reviews, explore restaurant menu, earn credits to their BhojWallet and much more. You name it! BHOJ is also a strong platform for restaurants in Nepal who want to reach out to hungry foodies. Listing on Bhoj App is a very simple process and doesnt take more than a few minutes. If you are a restaurant, feel free to log on to our...",
-      "source_title": "\u200eBhojdeals (Now Bhoj) App - App Store",
-      "source_url": "https://apps.apple.com/us/app/bhojdeals-now-bhoj/id1038039473",
-      "is_sample_data": false,
-      "evidence": "scraped page",
-      "on_focus": true,
-      "domain": "apps.apple.com"
-    },
-    {
-      "id": "F6",
-      "claim": "Cash remains the dominant payment method in Nepal, especially outside urban centers, due to limited banking penetration and a cultural preference for tangible money. However, digital payments are gaining traction, particularly in Kathmandu and other cities, fueled by widespread smartphone use and government-backed digital financial inclusion programs. Cards issued by Visa and Mastercard are accepted at many merchants and ATMs, but card penetration is still modest compared to more developed markets.",
-      "source_title": "Accepting Payments in Nepal: PSPs, Compliance & Fees",
-      "source_url": "https://payatlas.com/countries/nepal-np",
-      "is_sample_data": false,
-      "evidence": "scraped page",
-      "on_focus": true,
-      "domain": "payatlas.com"
-    },
-    {
       "id": "F7",
-      "claim": "to Nepal\u2019s digital payments journey. The core pillars of the NPSDS have laid the groundwork for the evolution of digital payments in Nepal. These include legal frameworks, retail payments, international remittances, and interbank transactions. Subsequent initiatives, such as the Digital Nepal Framework of 2019 and the Retail Payments Strategy of 2019, complemented the NPSDS and contributed to the evolution of Nepal\u2019s digital payments space. During the pandemic, the use of alternative payment [...] The DNF outlines a comprehensive strategy to drive digital transformation in Nepal, including...",
-      "source_title": "Digital Financial Services in Nepal",
-      "source_url": "https://www.ifc.org/content/dam/ifc/doc/2025/digital-financial-services-in-nepal.pdf",
+      "claim": "Rank Company Details Short Description Total Funding Investors Tracxn Score 1st Logo for Bhoj Bhoj 2014, Kathmandu (Nepal), Unfunded Online platform to order food from restaurants - 56/100 2nd Logo for Foodmandu Foodmandu 2010, Kathmandu (Nepal), Series B On demand food ordering and delivery service in Nepal Team Ventures, True North Associates & 2 others 55/100 [...] 3rd Logo for BhojMandu BhojMandu 2020, Kathmandu (Nepal), Unfunded On-demand online food delivery platform - 45/100 4th Logo for Foodganj Foodganj 2020, Kathmandu (Nepal), Unfunded Online platform for food ordering and deliver...",
+      "source_title": "Foodmandu - 2026 Company Profile, Team, Funding & Competitors - Tracxn",
+      "source_url": "https://tracxn.com/d/companies/foodmandu/__gZGaNK2y4r4rVfW5IzDzYvUcgiRUzk7uIwGiIjmrnpo",
       "is_sample_data": false,
       "evidence": "search snippet",
       "on_focus": true,
-      "domain": "ifc.org"
+      "domain": "tracxn.com"
     },
     {
       "id": "F8",
-      "claim": "e) Many countries lack comprehensive regulations governing digital payments. This can lead to inconsistencies in how these payments are handled, gaps in consumer protection, and challenges in enforcing rules across different platforms and providers. f) For countries like Nepal with significant remittance flows, ensuring that digital payment systems are compatible with international standards and regulations can be complex. [...] This section identifies key challenges faced by Nepal in adopting digital payments, including the digital divide, cybersecurity risks, and lack of interoperability....",
-      "source_title": "Raising Good Governance through Digital Payment Systems: Insights from Nepal and India's UPI",
-      "source_url": "https://www.nepjol.info/index.php/bcj/article/download/73169/55946/212407",
+      "claim": "Yisreal Jamel Berakah on Facebook: \"What's a great delivery app here? Pathao or no?\" What's a great delivery app here? Pathao or no? - Author: Yisreal Jamel Berakah - Group: EXPATS & FOREIGNERS IN NEPAL - Posted: 2026-06-06T04:45:19+00:00 - Reactions: 0 - Comment count: 2 - Shares: 0 - Privacy: Public group Comments - Anonymous participant 346: Till now, Pathao has been my favorite. Though its quiet pricely than other apps - Nirmala Sharma: Yango",
+      "source_title": "Yisreal Jamel Berakah on Facebook: \"What's a great delivery app here? Pathao or no?\"",
+      "source_url": "https://www.facebook.com/groups/expatsofnepal/posts/10166010734980676",
       "is_sample_data": false,
       "evidence": "search snippet",
       "on_focus": true,
-      "domain": "nepjol.info"
+      "domain": "facebook.com"
     },
     {
       "id": "F9",
-      "claim": "Moving forward The emerging digital payment system knocks further calibrated moves from regulators and operators. Despite increasing digital financial transactions and changing the transaction behaviour of customers, the payment system faces low digital literacy, inadequate and disaggregated digital infrastructure, insufficient interoperability among service providers, multiple regulatory windows and a lack of foreign investment. [...] Furthermore, digitalisation reduces multiple layers involved in the service delivery, identifies and tracks the targeted people, and puts off intermediaries....",
-      "source_title": "Rise and rise of digital payment in Nepal",
-      "source_url": "https://kathmandupost.com/columns/2023/05/30/rise-and-rise-of-digital-payment-in-nepal",
+      "claim": "Share Sanskar on Facebook: \"Yango has officially entered Nepal\u2019s food delivery market, expanding its services beyond ride-sharin\u2026\" Yango has officially entered Nepal\u2019s food delivery market, expanding its services beyond ride-sharing and directly competing with established platforms Pathao and Foodmandu. This move marks a significant shift in the country\u2019s digital delivery sector, increasing competition and broadening choices for consumers. #fblifestyle",
+      "source_title": "Share Sanskar on Facebook: \"Yango has officially entered Nepal\u2019s food delivery market, expanding its services beyond ride-sharin\u2026\"",
+      "source_url": "https://www.facebook.com/sanskarshare/posts/yango-has-officially-entered-nepals-food-delivery-market-expanding-its-services-/979256038427798",
       "is_sample_data": false,
       "evidence": "search snippet",
       "on_focus": true,
-      "domain": "kathmandupost.com"
+      "domain": "facebook.com"
     },
     {
       "id": "F10",
-      "claim": "For Nepal, the Convention comes at a critical moment. Ride-hailing, food and parcel delivery, freelance digital services and other digital labour platforms are already supporting tourism, small and medium-sized enterprises, digital payments and youth employment. As Nepal's digital economy grows, the platform economy is creating new opportunities for jobs and entrepreneurship, and so is the need to ensure decent work for platform workers.",
-      "source_title": "New international labour standard supports Nepal's growing digital platform economy | International Labour Organization",
-      "source_url": "https://www.ilo.org/resource/article/new-international-labour-standard-supports-nepals-growing-digital-platform",
+      "claim": "Food Delivery Market Analysis size 2021 was recorded $118093 Million whereas by the end of 2026 it will reach $216110.69 Million. According to the author, by 2033 Food Delivery market size will become $503568 Million. Food Delivery market will be growing at a CAGR of 12.846% during 2026 to 2033. Download a free sample with data verified by Anushka Gore",
+      "source_title": "Food Delivery Market Analysis 2026: Revenue, Volume, Market Size, Share, CAGR, Growth Trends, Competitor Analysis, Historic Data, and Forecast to 2034",
+      "source_url": "https://www.cognitivemarketresearch.com/food-delivery-market-report",
       "is_sample_data": false,
       "evidence": "scraped page",
-      "on_focus": true,
-      "domain": "ilo.org"
+      "on_focus": false,
+      "domain": "cognitivemarketresearch.com"
     }
   ],
   "draft": {
-    "summary": "Nepal's food delivery market, centered in Kathmandu, is a growing but competitive digital sector with several established and emerging platforms. Key players include Foodmandu (founded 2010), Bhoj (founded 2014), and Pathao, with international entrant Yango recently entering the market. The sector's growth is supported by increasing smartphone adoption and government-backed digital initiatives, though cash remains the dominant payment method and digital infrastructure challenges persist. The platform economy is increasingly important for youth employment and entrepreneurship in Nepal.",
+    "summary": "Nepal's food delivery market is centered in Kathmandu and is served by a small but growing number of platforms. Foodmandu, founded in 2010, is the pioneer, while Pathao Food and the recently entered Yango are intensifying competition. The market encompasses online meal and grocery ordering delivered by restaurants, retailers, or platforms [F1]. Globally, the food delivery market is growing rapidly, which provides a favorable backdrop for Nepal's nascent digital delivery ecosystem [F10].",
     "competitors": [
       {
         "name": "Foodmandu",
-        "note": "Founded in 2010 in Kathmandu, Foodmandu is a Series B-funded on-demand food ordering and delivery service and one of the most established players in Nepal's food delivery market. Investors include Team Ventures and True North Associates.",
+        "note": "Founded in 2010 and based in Kathmandu, Foodmandu is Nepal's pioneering on-demand food ordering and delivery service. It has reached Series B funding with investors including Team Ventures and True North Associates, and operates across Kathmandu, Pokhara, Chitwan, and Butwal.",
         "finding_ids": [
-          "F1",
           "F2",
-          "F4"
+          "F5",
+          "F6",
+          "F7",
+          "F9"
         ]
       },
       {
-        "name": "Pathao",
-        "note": "Pathao is an established food delivery platform in Nepal competing with Foodmandu and newer entrant Yango. It is actively used by restaurants in Kathmandu for online food orders.",
+        "name": "Pathao Food",
+        "note": "Pathao is a prominent multi-service platform in Nepal that includes food delivery alongside ride-sharing, and is considered one of the established players competing directly with Foodmandu in the Kathmandu market.",
         "finding_ids": [
-          "F1",
-          "F3"
+          "F5",
+          "F8",
+          "F9"
         ]
       }
     ],
     "observations": [
-      "The Nepal food delivery market is seeing increased competition with Yango's entry, directly challenging established platforms Pathao and Foodmandu and broadening consumer choices [F1].",
-      "Foodmandu is the longest-running food delivery platform in Nepal, founded in 2010, and is the only Series B-funded company among tracked competitors, with investors including Team Ventures and True North Associates [F2, F4].",
-      "Bhoj (previously Bhojdeals), founded in 2014 and based in Kathmandu, operates as a comprehensive food platform offering delivery, dine-in deals, restaurant reviews, and a digital wallet (BhojWallet), ranked first on Tracxn with a score of 56/100 [F2, F5].",
-      "Cash remains the dominant payment method in Nepal, especially outside urban centers, though digital payments are gaining traction in Kathmandu driven by smartphone use and government financial inclusion programs [F6].",
-      "Nepal faces structural challenges in its digital economy including low digital literacy, inadequate digital infrastructure, insufficient interoperability among service providers, and a lack of foreign investment [F8, F9].",
-      "The ILO recognizes that ride-hailing, food and parcel delivery, and other digital platforms are supporting tourism, SMEs, digital payments, and youth employment in Nepal's growing digital economy [F10]."
+      "Foodmandu is the longest-operating food delivery platform in Nepal, founded in 2010, and is the only one in the Tracxn ranking to have secured Series B funding [F6, F7].",
+      "Pathao Food and Foodmandu are identified as the two established platforms in Nepal's food delivery sector, with Yango recently entering as a new competitor expanding from ride-sharing into food delivery [F9].",
+      "Multiple smaller startups such as Bhoj (founded 2014), BhojMandu (2020), and Foodganj (2020) also operate in Nepal's food delivery space, though most remain unfunded [F7].",
+      "Nepal's online grocery segment is also developing, with at least 33 startups tracked, including Kirana Pasal, Kheti, and Hamro Allpasal [F4].",
+      "Yango's entry into the market signals growing international interest in Nepal's food delivery space and is broadening consumer choices beyond the two incumbent platforms [F9].",
+      "Globally, the food delivery market is projected to grow from approximately $216 billion in 2026 to about $504 billion by 2033 at a CAGR of roughly 12.8%, providing a favorable macro environment for Nepal's market development [F10]."
     ],
     "sources": [
-      "[F1] Share Sanskar on Facebook: \"Yango has officially entered Nepal\u2019s food delivery market, expanding its services beyond ride-sharin\u2026\" - https://www.facebook.com/sanskarshare/posts/yango-has-officially-entered-nepals-food-delivery-market-expanding-its-services-/979256038427798",
-      "[F2] Foodmandu - 2026 Company Profile, Team, Funding & Competitors - Tracxn - https://tracxn.com/d/companies/foodmandu/__gZGaNK2y4r4rVfW5IzDzYvUcgiRUzk7uIwGiIjmrnpo",
-      "[F3] Jhakaas Fast Food | Kathmandu on Instagram: \"Thinking about what to eat today? \ud83d\udc40\ud83e\udd24 Your favorite meals are just a click away with exciting offers \u2026\" - https://www.instagram.com/p/DS6yUEFlJv4",
-      "[F4] Foodmandu - Products, Competitors, Financials, Employees, Headquarters Locations - https://www.cbinsights.com/company/foodmandu",
-      "[F5] \u200eBhojdeals (Now Bhoj) App - App Store - https://apps.apple.com/us/app/bhojdeals-now-bhoj/id1038039473",
-      "[F6] Accepting Payments in Nepal: PSPs, Compliance & Fees - https://payatlas.com/countries/nepal-np",
-      "[F8] Raising Good Governance through Digital Payment Systems: Insights from Nepal and India's UPI - https://www.nepjol.info/index.php/bcj/article/download/73169/55946/212407",
-      "[F9] Rise and rise of digital payment in Nepal - https://kathmandupost.com/columns/2023/05/30/rise-and-rise-of-digital-payment-in-nepal",
-      "[F10] New international labour standard supports Nepal's growing digital platform economy | International Labour Organization - https://www.ilo.org/resource/article/new-international-labour-standard-supports-nepals-growing-digital-platform"
+      "[F1] Online Food Delivery - Nepal | Statista Market Forecast - https://www.statista.com/outlook/emo/online-food-delivery/nepal",
+      "[F2] Foodmandu: Food Delivery Service in Kathmandu, Pokhara, Chitwan, Butwal - https://foodmandu.com",
+      "[F4] List of 33 Online Grocery Startups in Nepal & Market Trends (Oct 2026) - Tracxn - https://tracxn.com/d/explore/online-grocery-startups-in-nepal/__MxvYnzWio25tHM9UJnX_25nODxVz2MFDBYzUWzNkrGM",
+      "[F5] The Growth of Foodmandu and Pathao Food in Nepal's Food Delivery Market | PDF - https://www.scribd.com/document/1021186427/The-Growth-of-Foodmandu-and-Pathao-Food-in-Nepal-s-Food-Delivery-Market-docx-1-2",
+      "[F6] Foodmandu - Products, Competitors, Financials, Employees, Headquarters Locations - https://www.cbinsights.com/company/foodmandu",
+      "[F7] Foodmandu - 2026 Company Profile, Team, Funding & Competitors - Tracxn - https://tracxn.com/d/companies/foodmandu/__gZGaNK2y4r4rVfW5IzDzYvUcgiRUzk7uIwGiIjmrnpo",
+      "[F8] Yisreal Jamel Berakah on Facebook: \"What's a great delivery app here? Pathao or no?\" - https://www.facebook.com/groups/expatsofnepal/posts/10166010734980676",
+      "[F9] Share Sanskar on Facebook: \"Yango has officially entered Nepal\u2019s food delivery market, expanding its services beyond ride-sharin\u2026\" - https://www.facebook.com/sanskarshare/posts/yango-has-officially-entered-nepals-food-delivery-market-expanding-its-services-/979256038427798",
+      "[F10] Food Delivery Market Analysis 2026: Revenue, Volume, Market Size, Share, CAGR, Growth Trends, Competitor Analysis, Historic Data, and Forecast to 2034 - https://www.cognitivemarketresearch.com/food-delivery-market-report"
     ],
     "missing_information": [
-      "Overall market size and revenue figures for Nepal's food delivery sector",
-      "Market share breakdown among Foodmandu, Bhoj, Pathao, and Yango",
-      "Number of active users or orders per platform",
-      "Growth rate and year-over-year trends for the food delivery market in Nepal",
-      "Average order value and delivery fee structures",
-      "Geographic coverage beyond Kathmandu (e.g., Pokhara, Biratnagar)",
-      "Regulatory framework specific to food delivery platforms in Nepal"
+      "Total market size and revenue figures specific to Nepal's food delivery market",
+      "Market share breakdown among Foodmandu, Pathao Food, Yango, and other players in Nepal",
+      "Number of active users and order volumes for food delivery platforms in Nepal",
+      "Regulatory environment and government policies affecting food delivery in Nepal",
+      "Detailed pricing and commission structures of competing platforms in Nepal"
     ]
   },
   "critique": {
@@ -176,7 +177,7 @@
       "detail": {
         "query": "Analyze the food delivery market in Nepal"
       },
-      "timestamp": "2026-11-22T03:11:38.811058Z",
+      "timestamp": "2026-11-22T04:54:41.638972Z",
       "duration_ms": null
     },
     {
@@ -189,14 +190,14 @@
           "Kathmandu"
         ],
         "queries": [
-          "Nepal food delivery market size growth 2024",
-          "Foodmandu Pathao Bhojdeals Nepal food delivery competition",
-          "Nepal online food delivery apps users trends 2024",
-          "food delivery regulation digital payments Nepal"
+          "Nepal food delivery market size growth 2026",
+          "top food delivery apps Nepal Kathmandu market share",
+          "Nepal online food delivery regulation trends 2026",
+          "Foodmandu Pathao Food Nepal food delivery competition"
         ],
         "source": "Tavily web search"
       },
-      "timestamp": "2026-11-22T03:11:41.908040Z",
+      "timestamp": "2026-11-22T04:54:44.641934Z",
       "duration_ms": null
     },
     {
@@ -205,15 +206,15 @@
       "detail": {
         "used": 4,
         "skipped": {
-          "https://www.facebook.com/sanskarshare/posts/yango-has-officially-entered-nepals-food-delivery-market-expanding-its-services-/979256038427798": "disallowed by robots.txt",
+          "https://www.quora.com/Are-there-any-reliable-local-delivery-companies-in-Kathmandu-suitable-for-food-delivery-within-Ring-Road": "disallowed by robots.txt",
+          "https://tracxn.com/d/explore/online-grocery-startups-in-nepal/__MxvYnzWio25tHM9UJnX_25nODxVz2MFDBYzUWzNkrGM": "disallowed by robots.txt",
+          "https://www.scribd.com/document/1021186427/The-Growth-of-Foodmandu-and-Pathao-Food-in-Nepal-s-Food-Delivery-Market-docx-1-2": "no relevant passage on page",
           "https://tracxn.com/d/companies/foodmandu/__gZGaNK2y4r4rVfW5IzDzYvUcgiRUzk7uIwGiIjmrnpo": "disallowed by robots.txt",
-          "https://www.instagram.com/p/DS6yUEFlJv4": "disallowed by robots.txt",
-          "https://www.ifc.org/content/dam/ifc/doc/2025/digital-financial-services-in-nepal.pdf": "PDF report (PDF reading is off)",
-          "https://www.nepjol.info/index.php/bcj/article/download/73169/55946/212407": "PDF report (PDF reading is off)",
-          "https://kathmandupost.com/columns/2023/05/30/rise-and-rise-of-digital-payment-in-nepal": "no relevant passage on page"
+          "https://www.facebook.com/groups/expatsofnepal/posts/10166010734980676": "disallowed by robots.txt",
+          "https://www.facebook.com/sanskarshare/posts/yango-has-officially-entered-nepals-food-delivery-market-expanding-its-services-/979256038427798": "disallowed by robots.txt"
         }
       },
-      "timestamp": "2026-11-22T03:11:49.576262Z",
+      "timestamp": "2026-11-22T04:54:56.183801Z",
       "duration_ms": null
     },
     {
@@ -221,13 +222,14 @@
       "action": "collected findings",
       "detail": {
         "count": 10,
-        "on_focus": 10,
+        "duplicates": 0,
+        "on_focus": 9,
         "scraped": 4,
         "dropped_unusable": 0,
         "sample_data": false
       },
-      "timestamp": "2026-11-22T03:11:49.576463Z",
-      "duration_ms": 10765
+      "timestamp": "2026-11-22T04:54:56.184218Z",
+      "duration_ms": 14545
     },
     {
       "agent": "Analyst",
@@ -236,11 +238,11 @@
         "observations": 6,
         "competitors": [
           "Foodmandu",
-          "Pathao"
+          "Pathao Food"
         ]
       },
-      "timestamp": "2026-11-22T03:12:01.373213Z",
-      "duration_ms": 11797
+      "timestamp": "2026-11-22T04:55:08.555068Z",
+      "duration_ms": 12371
     },
     {
       "agent": "Critic",
@@ -248,8 +250,8 @@
       "detail": {
         "issues": []
       },
-      "timestamp": "2026-11-22T03:12:02.966409Z",
-      "duration_ms": 1593
+      "timestamp": "2026-11-22T04:55:10.085152Z",
+      "duration_ms": 1530
     },
     {
       "agent": "Orchestrator",
@@ -259,8 +261,8 @@
         "revisions_used": 0,
         "citation_coverage": 0.9
       },
-      "timestamp": "2026-11-22T03:12:02.966593Z",
-      "duration_ms": 24156
+      "timestamp": "2026-11-22T04:55:10.085518Z",
+      "duration_ms": 28447
     }
   ],
   "quality": {
@@ -268,21 +270,19 @@
     "cited": 9,
     "citation_coverage": 0.9,
     "domains": [
-      "apps.apple.com",
       "cbinsights.com",
+      "cognitivemarketresearch.com",
       "facebook.com",
-      "ifc.org",
-      "ilo.org",
-      "instagram.com",
-      "kathmandupost.com",
-      "nepjol.info",
-      "payatlas.com",
+      "foodmandu.com",
+      "quora.com",
+      "scribd.com",
+      "statista.com",
       "tracxn.com"
     ],
     "scraped_pages": 4,
     "search_snippets": 6,
     "sample_findings": 0,
-    "on_focus": 10,
+    "on_focus": 9,
     "focus": [
       "Nepal",
       "Kathmandu"
@@ -290,5 +290,6 @@
     "kind": "market",
     "grounding_problems": []
   },
-  "duration_ms": 24156
+  "duration_ms": 28447,
+  "notice": null
 }

@@ -1,6 +1,6 @@
 # 011 Fixes from the full audit: requirements
 
-Status: done
+Status: done except R10 (two Facebook posts remain in the sample, see T5)
 
 ## Why
 
@@ -58,4 +58,5 @@ All tests are in `tests/unit/test_audit_fixes.py`.
 - [x] **T2** Failing tests, then fixes, for R1 to R9.
 - [x] **T3** `make lint` and `make test` pass (192 tests, 97% coverage).
 - [x] **T4** Live check: the IFC Nepal digital payments PDF now gives a prose passage about NRB and UPI instead of its abbreviations page.
-- [ ] **T5** Regenerate the sample (R10) and check it by hand.
+- [x] **T5** Regenerated the sample on Bedrock (Claude Opus 4.6). Searches now ask for 2026 data, there are no duplicate findings or doubled citations, no table headers, and the Critic approved with 9 of 10 findings cited.
+- [ ] **T6** R10 is not fully met: two Facebook posts are still cited (F8, a question in an expats group; F9, a post about Yango entering Nepal). Spec 010 keeps social posts and only ranks them last. Deciding whether to drop them when enough other on-focus findings exist is a follow-up.

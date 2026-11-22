@@ -22,6 +22,6 @@ Requirements use ids such as `R1.2`. Tasks and tests refer back to those ids, so
 | [008 Optional PDF report reading](008-pdf-reports/requirements.md) | Done, checked live |
 | [009 Consistent runs](009-consistent-runs/requirements.md) | Done, checked live |
 | [010 Fixes from the live runs](010-live-run-fixes/requirements.md) | Done, checked live |
-| [011 Fixes from the full audit](011-audit-fixes/requirements.md) | Done, checked live |
+| [011 Fixes from the full audit](011-audit-fixes/requirements.md) | Done, checked live (R10 open: social posts in the sample) |
 
 A spec changes when the plan changes. Update it in the same pull request as the code, so the spec and the code never disagree.
