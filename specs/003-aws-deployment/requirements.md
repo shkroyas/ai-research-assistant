@@ -21,5 +21,5 @@ A single EC2 instance running `docker compose`. It is cheaper and simpler, but h
 
 ## Open questions
 
-- Budget limit for the demo period.
+- Budget limit for the demo period. See [cost.md](cost.md) for the estimate.
 - Whether the deployment should stay up after the assignment is reviewed.
