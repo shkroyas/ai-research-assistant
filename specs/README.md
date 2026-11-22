@@ -19,5 +19,6 @@ Requirements use ids such as `R1.2`. Tasks and tests refer back to those ids, so
 | [005 Market focus and evidence hygiene](005-market-focus/requirements.md) | Done (live re-run pending) |
 | [006 Query types](006-query-types/requirements.md) | Done (live runs pending) |
 | [007 Clarifying questions, declines and safe failure](007-intake-and-safety/requirements.md) | Done (live check pending) |
+| [008 Optional PDF report reading](008-pdf-reports/requirements.md) | Done (live check pending) |
 
 A spec changes when the plan changes. Update it in the same pull request as the code, so the spec and the code never disagree.

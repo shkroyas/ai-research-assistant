@@ -169,6 +169,7 @@ All settings are environment variables, read from `.env`. See [`.env.example`](.
 | `TAVILY_API_KEY` | unset | Enables live web search |
 | `MAX_SEARCH_RESULTS` | `5` | Results per search query |
 | `SCRAPE_PAGES` | `true` | Read each result page and keep its most relevant passage |
+| `READ_PDFS` | `false` | Also read PDF reports in the results (first 20 pages, up to 10 MB). Also a switch in the sidebar |
 | `MAX_REVISIONS` | `1` | Critic revision limit (0 or 1) |
 
 Only using Groq? Set `LLM_PROVIDERS=groq`. Only Claude? Set `LLM_PROVIDERS=bedrock`.
@@ -261,6 +262,7 @@ Work is planned in [`specs/`](specs/README.md) before it is built. Each spec lis
 - Brief quality depends on what web search returns; niche or very local topics may have thin coverage, which the brief reports under *Missing information*.
 - The sample dataset is small and illustrative, intended only for offline demos.
 - Page reading does not run JavaScript, so content rendered only in the browser falls back to the search snippet. Paywalled pages are not read.
+- PDF reports are read only when switched on, and only their first 20 pages. Text from multi-column layouts and tables can come out jumbled.
 - Briefs are drafts for a person to review, not verified research.
 
 ---

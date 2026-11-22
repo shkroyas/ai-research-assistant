@@ -32,6 +32,8 @@ class Settings(BaseSettings):
 
     # Read each result page and keep its most relevant passage (see scraper.py).
     scrape_pages: bool = True
+    # Also read PDF reports found in search results (first 20 pages, up to 10 MB).
+    read_pdfs: bool = False
 
     max_search_results: int = Field(default=5, ge=1, le=10)
     max_revisions: int = Field(default=1, ge=0, le=1)

@@ -14,6 +14,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - Request types: the Researcher recognises market, company, comparison and topic requests, plans searches for each, and the Analyst and Critic adapt the brief to the type. Requests about the whole world have no focus (spec 006).
 - Clarifying questions and declines: vague or ambiguous requests get one clarifying question with ready-to-run suggestions, and harmful or off-topic requests are declined with a reason, before any search (spec 007).
 - Safety: failed searches are skipped, model calls time out, extra competitors and blank lines from the model are trimmed, the app shows a message instead of a traceback, the query box is limited to 400 characters, the scraper never fetches private or metadata addresses, and prompts treat sources as untrusted (spec 007).
+- Optional PDF report reading: a "Read PDF reports" switch in the sidebar (`READ_PDFS`, off by default) reads the first 20 pages of PDFs up to 10 MB and keeps the most relevant passage (spec 008).
 - Grounding rule: a competitor supported only by background findings blocks approval.
 - Focus coverage in the quality report, an "About <focus>" metric in the Quality tab, and an "On focus" column in the Evidence tab.
 - Spec 005 with acceptance criteria and traceability.

@@ -91,6 +91,13 @@ def sidebar(settings: Settings) -> tuple[str | None, Settings]:
             "passage instead of the short search snippet.",
             disabled=not settings.web_search_enabled,
         )
+        read_pdfs = st.toggle(
+            "Read PDF reports",
+            value=settings.read_pdfs,
+            help="Also read PDF reports in the results (first 20 pages, up to 10 MB each). "
+            "Slower, and PDF text can be messy; when off, a PDF's search snippet is used.",
+            disabled=not settings.web_search_enabled or not scrape,
+        )
         depth = st.slider(
             "Results per search", 1, 10, settings.max_search_results, help="Up to 4 searches run"
         )
@@ -109,7 +116,9 @@ def sidebar(settings: Settings) -> tuple[str | None, Settings]:
             )
             st.button("Clear history", on_click=clear_history, width="stretch")
 
-    tuned = settings.model_copy(update={"scrape_pages": scrape, "max_search_results": depth})
+    tuned = settings.model_copy(
+        update={"scrape_pages": scrape, "read_pdfs": read_pdfs, "max_search_results": depth}
+    )
     return provider, tuned
 
 

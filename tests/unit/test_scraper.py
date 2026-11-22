@@ -115,7 +115,7 @@ def test_robots_txt_forbidden_means_disallow_all() -> None:
     [
         (
             httpx.Response(200, content=b"%PDF", headers={"content-type": "application/pdf"}),
-            "not HTML (application/pdf)",
+            "PDF report (PDF reading is off)",
         ),
         (html_response(status=503), "HTTP 503"),
         (

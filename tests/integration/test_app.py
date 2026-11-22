@@ -114,6 +114,15 @@ def test_sidebar_controls_reach_the_pipeline(chosen_providers, monkeypatch) -> N
     assert settings.max_search_results == 3
 
 
+def test_pdf_switch_reaches_the_pipeline(chosen_providers, monkeypatch) -> None:
+    monkeypatch.setenv("TAVILY_API_KEY", "tvly-test")
+    at = AppTest.from_file(APP, default_timeout=30).run()
+    assert at.sidebar.toggle[1].label == "Read PDF reports" and not at.sidebar.toggle[1].value
+    at.sidebar.toggle[1].set_value(True)
+    research(at, "Food delivery in Nepal")
+    assert BUILT_WITH[-1].read_pdfs is True
+
+
 def test_model_picker_offers_claude_and_groq(chosen_providers) -> None:
     at = AppTest.from_file(APP, default_timeout=30).run()
     assert at.sidebar.radio[0].options == ["Claude (AWS Bedrock)", "Groq"]
