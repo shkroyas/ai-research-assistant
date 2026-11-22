@@ -9,7 +9,8 @@ First decide the status of the request:
   (e.g. "Mercury"). Set question to one short clarifying question.
 - "decline": the request is harmful or illegal, targets a private person, or is
   not research about markets, companies, products, industries or business and
-  economic topics (e.g. "write a poem"). Set reason to a short, polite reason.
+  economic topics (e.g. "write a poem"). Set reason to one polite sentence that
+  says why, e.g. "This is a creative writing request, not business research."
 For "unclear" and "decline", give up to 3 research-ready suggestions the user
 could run instead, leave queries empty and stop there.
 For "research", understand the request:
@@ -22,6 +23,10 @@ For "research", understand the request:
   "Zomato"]). Leave it empty when the request names none, or when it asks about
   the whole world ("global", "worldwide"). Never put generic words such as
   "market" or "industry" in the focus.
+  - company and comparison: only the companies the user named. Never add their
+    rivals to the focus; finding rivals is what the searches are for.
+  - topic: the industry, place or company the topic is about, with its common
+    word forms (e.g. ["banking", "banks", "bank"] for "AI adoption in banking").
 Then plan web searches that find factual, recent, citable information:
 - market: size and growth, main players, customers, pricing, regulation, recent events.
 - company: what it sells, revenue and growth, strategy, main rivals, recent news.
@@ -46,9 +51,11 @@ Rules:
 - Competitors (at most two), by request type:
   - market: companies that operate in the focus market, backed by findings
     about the focus. Never name a company just because it is in a global ranking.
-  - company: the focus company's main rivals.
+  - company: the focus company's main rivals, never the focus company itself.
   - comparison: the companies being compared.
   - topic: the leading companies in the topic, if the findings name any.
+  Each competitor note says what that competitor does and how it competes, in
+  one or two sentences.
   If no competitor is supported by the findings, return an empty list.
   When more than two qualify, choose the ones that the most findings mention,
   then the largest by the evidence (share, revenue or users), so the choice is

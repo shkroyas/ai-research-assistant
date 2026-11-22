@@ -26,4 +26,4 @@ Running the same request twice named different competitors. Three things vary be
 
 - [x] **T1** Temperature setting and client support with fallback.
 - [x] **T2** Stable competitor choice in the Analyst prompt.
-- [ ] **T3** Live check: run the same request three times and compare competitors.
+- [x] **T3** Live check: the Nepal request named the same two competitors in 5 of 6 runs. Claude on Bedrock rejects the temperature setting, so on Claude the competitor rule does this work (spec 010).

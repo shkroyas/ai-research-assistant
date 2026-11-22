@@ -35,7 +35,7 @@ def test_models_that_reject_temperature_fall_back_to_their_default() -> None:
         return reply("brief")
 
     client = BedrockClaudeClient(
-        model_id="m",
+        model_id="rejects-temperature",
         region="r",
         client=SimpleNamespace(messages=SimpleNamespace(create=create)),
         temperature=0.2,
@@ -43,6 +43,10 @@ def test_models_that_reject_temperature_fall_back_to_their_default() -> None:
     assert client.complete("s", "p") == "brief"
     assert client.complete("s", "p") == "brief"
     assert ["temperature" in c for c in calls] == [True, False, False]  # remembered
+    fresh = BedrockClaudeClient(
+        model_id="rejects-temperature", region="r", client=client._client, temperature=0.2
+    )
+    assert fresh.temperature is None  # later runs in the same app skip it at once
 
 
 def test_groq_sends_the_configured_temperature() -> None:

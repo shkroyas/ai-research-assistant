@@ -18,6 +18,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - Safety: failed searches are skipped, model calls time out, extra competitors and blank lines from the model are trimmed, the app shows a message instead of a traceback, the query box is limited to 400 characters, the scraper never fetches private or metadata addresses, and prompts treat sources as untrusted (spec 007).
 - Optional PDF report reading: a "Read PDF reports" switch in the sidebar (`READ_PDFS`, off by default) reads the first 20 pages of PDFs up to 10 MB and keeps the most relevant passage (spec 008).
 - Consistent runs: model calls use a low temperature (`LLM_TEMPERATURE`, default 0.2; dropped automatically for models that reject it), and the Analyst picks the competitors the most findings mention (spec 009).
+- Fixes from live runs (spec 010): a single-company request is no longer treated as a comparison, a company is never its own competitor, topic requests focus on the industry they are about, page noise (table headers, icon text, emoji) is dropped, social media posts rank after articles, and declines give a clear reason.
 - Grounding rule: a competitor supported only by background findings blocks approval.
 - Focus coverage in the quality report, an "About <focus>" metric in the Quality tab, and an "On focus" column in the Evidence tab.
 - Spec 005 with acceptance criteria and traceability.

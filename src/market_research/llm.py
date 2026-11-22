@@ -16,7 +16,7 @@ import logging
 import re
 import time
 from collections.abc import Callable, Sequence
-from typing import Any, Protocol, TypeVar
+from typing import Any, ClassVar, Protocol, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -83,7 +83,10 @@ class BedrockClaudeClient:
         self._client = client
         self.model_id = model_id
         self.name = f"Bedrock {model_id}"
-        self.temperature = temperature
+        self.temperature = None if model_id in self._no_temperature else temperature
+
+    # Model ids that rejected `temperature` in this process, so later runs skip it.
+    _no_temperature: ClassVar[set[str]] = set()
 
     def complete(self, system: str, prompt: str, max_tokens: int = 4000) -> str:
         request: dict[str, Any] = {
@@ -102,8 +105,9 @@ class BedrockClaudeClient:
                 # session and retry once, rather than failing the run.
                 if "temperature" not in request or "temperature" not in str(exc).lower():
                     raise
-                logger.warning("%s does not accept temperature; using its default", self.name)
+                logger.info("%s does not accept temperature; using its default", self.name)
                 self.temperature = None
+                BedrockClaudeClient._no_temperature.add(self.model_id)
                 del request["temperature"]
                 response = self._client.messages.create(**request)
         except Exception as exc:  # SDK raises typed errors; callers only need "failed"

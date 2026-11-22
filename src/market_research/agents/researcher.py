@@ -12,6 +12,7 @@ from market_research.evidence import (
     fallback_kind,
     mentions_focus,
     rank_results,
+    settle_kind,
 )
 from market_research.intake import screen_query
 from market_research.llm import LLMClient, LLMError, complete_json
@@ -107,8 +108,11 @@ class Researcher:
         # A focus of only "global" means the user asked about the whole world: keep it empty.
         # The name fallback is for plans that left the focus out altogether.
         focus = clean_focus(plan.focus if plan.focus else fallback_focus(query))
+        kind, focus = settle_kind(query, plan.kind, focus)
         queries = [q.strip() for q in plan.queries if q.strip()] or [query]
-        return plan.model_copy(update={"focus": focus, "queries": ensure_focus(queries, focus)})
+        return plan.model_copy(
+            update={"kind": kind, "focus": focus, "queries": ensure_focus(queries, focus)}
+        )
 
     def run(self, state: ResearchState) -> ResearchState:
         screened = screen_query(state.query)

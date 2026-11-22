@@ -55,7 +55,7 @@ Every handoff passes a single Pydantic object, `ResearchState`, holding the quer
 
 **Stays on the market you asked about.** The Researcher first names the query's focus (for example *Nepal*, with local names such as *Kathmandu*), makes every search include it, and ranks results that mention it first. At most three general results are kept, marked as background, so a brief about Nepal is not built on global figures or on DoorDash and Uber Eats. Redacted figures such as `US$ ****` and table noise are removed from the evidence before the Analyst sees it.
 
-**Evidence first.** The Researcher numbers every finding (`F1`, `F2`, ...). The Analyst may only cite those ids. Plain code (`grounding.py`) then flags uncited observations, invented citations competitors with no supporting finding, competitors backed only by background findings, and masked figures, and the Critic sees those flags.
+**Evidence first.** The Researcher numbers every finding (`F1`, `F2`, ...). The Analyst may only cite those ids. Plain code (`grounding.py`) then flags uncited observations, invented citations, competitors with no supporting finding, competitors backed only by background findings, and masked figures, and the Critic sees those flags.
 
 **Quality you can see.** Each run ends with a quality report computed in code: citation coverage, how many findings are about the focus, distinct source domains, how many findings came from full pages, and any remaining citation problems. Every agent step is timed.
 
@@ -293,7 +293,7 @@ Work is planned in [`specs/`](specs/README.md) before it is built. Each spec lis
 - The sample dataset is small and illustrative, intended only for offline demos.
 - Page reading does not run JavaScript, so content rendered only in the browser falls back to the search snippet. Paywalled pages are not read.
 - PDF reports are read only when switched on, and only their first 20 pages. Text from multi-column layouts and tables can come out jumbled.
-- Runs are consistent but not identical: the model uses a low temperature (0.2) and a fixed rule for choosing competitors, but live search results change over time.
+- Runs are consistent but not identical. Groq uses a low temperature (0.2); Claude Opus 4.6 on Bedrock does not accept the setting and uses its default, so there the fixed rule for choosing competitors does the work (5 of 6 Nepal runs named the same two). Live search results also change over time.
 - Briefs are drafts for a person to review, not verified research.
 
 ---

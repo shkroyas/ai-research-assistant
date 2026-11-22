@@ -5,4 +5,4 @@
 - [x] **T3** Stop the run, and show the question or reason with suggestions in the app and the command line. *(R1.4)*
 - [x] **T4** Guard searches, model timeouts, tolerant brief limits, app error message, input limits. *(R2)*
 - [x] **T5** Public-address check in the scraper, and prompt rules for untrusted text. *(R3)*
-- [ ] **T6** Live check with vague, ambiguous and off-topic requests on Claude and Groq.
+- [x] **T6** Live check with vague, ambiguous and off-topic requests on Claude and Groq.
