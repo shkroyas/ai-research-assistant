@@ -38,14 +38,23 @@ The brief contains a **summary**, **up to two competitors**, **key observations*
 
 ```mermaid
 flowchart LR
-    UI[Streamlit UI] --> O[Orchestrator]
-    O --> R[Researcher]
-    R --> A[Analyst]
-    A --> C{Critic}
-    C -- approved --> B[Final brief + agent trace]
-    C -- "revision request (max 1)" --> A
-    R -. Tavily or sample data .- S[(Search)]
-    R -. robots.txt-aware .- P[(Source pages)]
+    U(["Your request"]) --> O["<b>Orchestrator</b><br/>runs each step"]
+    O --> R["<b>Researcher</b><br/>searches the web<br/>and reads the pages"]
+    R -->|"findings F1, F2, ..."| A["<b>Analyst</b><br/>writes the brief<br/>from the findings"]
+    A -->|"draft"| C["<b>Critic</b><br/>checks every claim<br/>has evidence"]
+    C -->|"approved"| B(["Brief, evidence,<br/>quality, trace"])
+    C -->|"revise, once at most"| A
+    W[("Tavily search<br/>and source pages")] -.-> R
+    R -.->|"unclear or off-topic"| Q(["Clarifying question<br/>or polite decline"])
+
+    classDef agent fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
+    classDef io fill:#dcfce7,stroke:#16a34a,color:#14532d
+    classDef ext fill:#f3f4f6,stroke:#6b7280,color:#111827
+    classDef stop fill:#fef3c7,stroke:#d97706,color:#78350f
+    class O,R,A,C agent
+    class U,B io
+    class W ext
+    class Q stop
 ```
 
 Every handoff passes a single Pydantic object, `ResearchState`, holding the query, findings, draft brief, critique and an agent trace. Each agent validates what it receives and what the model returns, so malformed output is caught at the boundary instead of reaching the user.
