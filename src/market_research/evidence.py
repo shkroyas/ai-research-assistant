@@ -12,6 +12,8 @@ from collections.abc import Iterable
 from market_research.search import SearchResult
 
 MASKED = re.compile(r"\*{2,}|█")
+# Markdown bold such as "**Foodmandu**": the stars hug the text, unlike "US$ ****".
+BOLD = re.compile(r"\*\*(?=[^\s*])(.+?)(?<=[^\s*])\*\*")
 TABLE_RULE = re.compile(r"\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?")
 SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 MAX_BACKGROUND = 3
@@ -43,9 +45,19 @@ NOT_NAMES = {
 }  # fmt: skip
 
 
+def unbold(text: str) -> str:
+    """'**Foodmandu** leads' -> 'Foodmandu leads'; masked figures are left alone."""
+    return BOLD.sub(r"\1", text)
+
+
+def has_masked(text: str) -> bool:
+    """True for redacted figures ('US$ ****', '██'), but not for markdown bold."""
+    return bool(MASKED.search(unbold(text)))
+
+
 def clean_evidence(text: str) -> str:
     """Drop sentences with masked figures and strip table, heading and bullet noise."""
-    text = TABLE_RULE.sub(" ", text)
+    text = TABLE_RULE.sub(" ", unbold(text))
     text = re.sub(r"(^|\s)#{1,6}\s", " ", text)
     text = text.replace("|", " ").replace("▲", " ").replace("▼", " ")
     text = EMOJI.sub(" ", ICON_WORDS.sub(" ", text))

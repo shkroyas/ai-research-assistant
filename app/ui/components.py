@@ -6,8 +6,8 @@ import streamlit as st
 
 from market_research.models import ResearchState
 from market_research.quality import brief_citations
-from market_research.render import brief_to_markdown
-from ui.text import format_ms, link_citations, short
+from market_research.render import brief_to_markdown, note_with_refs
+from ui.text import format_ms, grounding_status, link_citations, short
 
 AGENTS = [
     ("Orchestrator", "Receives the query, runs the workflow and enforces the one-revision limit."),
@@ -83,6 +83,8 @@ def brief_tab(state: ResearchState) -> None:
         return
     if state.uses_sample_data:
         st.warning("These findings come from the built-in sample dataset, not live web search.")
+    if state.notice:
+        st.info(state.notice)
 
     findings = state.findings
     with st.container(border=True):
@@ -96,8 +98,7 @@ def brief_tab(state: ResearchState) -> None:
             for col, c in zip(cols, brief.competitors, strict=True):
                 with col.container(border=True):
                     st.markdown(f"**{c.name}**")
-                    refs = f" [{', '.join(c.finding_ids)}]" if c.finding_ids else ""
-                    st.markdown(link_citations(c.note + refs, findings))
+                    st.markdown(link_citations(note_with_refs(c), findings))
         else:
             st.caption("None identified from the available evidence.")
 
@@ -186,10 +187,8 @@ def quality_tab(state: ResearchState) -> None:
         )
         if q.domains:
             st.caption("Domains: " + ", ".join(q.domains))
-        if q.grounding_problems:
-            st.error("Citation problems remain:\n\n- " + "\n- ".join(q.grounding_problems))
-        else:
-            st.success("Every observation cites a real finding.")
+        level, message = grounding_status(q)
+        getattr(st, level)(message)
 
     critique = state.critique
     st.markdown("**Critic review**")

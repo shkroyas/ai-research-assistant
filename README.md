@@ -119,7 +119,8 @@ cd ai-research-assistant
 
 # 2. Configure
 cp .env.example .env
-#    then edit .env and add your keys (see Configuration)
+#    then edit .env: uncomment GROQ_API_KEYS and TAVILY_API_KEY and add your keys
+#    (see Configuration). Left commented, the app runs offline on sample data.
 
 # 3a. Install and run with uv (recommended)
 uv sync
@@ -201,6 +202,7 @@ All settings are environment variables, read from `.env`. See [`.env.example`](.
 | `LLM_TEMPERATURE` | `0.2` | Model randomness (0 to 1). Low keeps runs consistent while allowing slight variation |
 | `READ_PDFS` | `false` | Also read PDF reports in the results (first 20 pages, up to 10 MB). Also a switch in the sidebar |
 | `MAX_REVISIONS` | `1` | Critic revision limit (0 or 1) |
+| `LOG_LEVEL` | `INFO` | Log level for the app's own modules (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
 
 Only using Groq? Set `LLM_PROVIDERS=groq`. Only Claude? Set `LLM_PROVIDERS=bedrock`.
 

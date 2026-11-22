@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 from market_research import pipeline
-from market_research.config import Settings
+from market_research.config import Settings, configure_logging
 from market_research.llm import LLMError
 from market_research.models import ResearchState
 from market_research.render import brief_to_markdown
@@ -87,13 +87,17 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     try:
         settings = Settings()
+        configure_logging(settings.log_level)
         orchestrator = pipeline.build_orchestrator(settings, args.provider)
 
         def on_step(agent: str, state: ResearchState) -> None:
             step = state.trace[-1]
             print(f"{step.agent}: {step.action}", file=sys.stderr)
 
-        state = orchestrator.run(args.query, on_step=on_step)
+        try:
+            state = orchestrator.run(args.query, on_step=on_step)
+        finally:
+            orchestrator.close()
     except (LLMError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

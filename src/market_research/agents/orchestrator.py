@@ -27,6 +27,10 @@ class Orchestrator:
         self.critic = critic
         self.max_revisions = max_revisions
 
+    def close(self) -> None:
+        """Release network resources held by the agents (the Researcher's page scraper)."""
+        self.researcher.close()
+
     def run(self, query: str, on_step: StepCallback | None = None) -> ResearchState:
         def notify(agent: str, state: ResearchState) -> None:
             if on_step is not None:

@@ -7,7 +7,7 @@ backed by evidence.
 
 import re
 
-from market_research.evidence import MASKED
+from market_research.evidence import has_masked
 from market_research.models import Brief, Finding
 
 CITATION_PATTERN = re.compile(r"\[(F\d+(?:\s*,\s*F\d+)*)\]")
@@ -52,7 +52,7 @@ def check_grounding(
             problems.append(f"Competitor {competitor.name!r} cites unknown finding {unknown}")
 
     texts = [brief.summary, *brief.observations, *(c.note for c in brief.competitors)]
-    if any(MASKED.search(text) for text in texts):
+    if any(has_masked(text) for text in texts):
         problems.append("Brief quotes a redacted or masked figure (e.g. 'US$ ****')")
 
     if kind == "company":

@@ -6,6 +6,17 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Fixed
 
+- Fixes from the full audit (spec 011):
+  - `.env.example` can be copied as it is: the Groq and Tavily placeholder keys are commented out, so the app stays in offline sample mode, and a blank key counts as unset.
+  - Markdown bold (`**Foodmandu**`) is no longer mistaken for a masked figure, so evidence sentences with bold are kept and a brief that uses bold can be approved.
+  - `LOG_LEVEL` is applied in the CLI and the app; the unused `get_settings()` is removed.
+  - Search plans get today's date, so they ask for current data instead of 2023 or 2024.
+  - The same article is one finding even with tracking parameters (`?fr=`, `utm_*`) or on a mirror site with identical text.
+  - With no findings, the Quality tab warns instead of showing a green tick, the Analyst does not name companies that no finding names, and offline mode says which sample topics are bundled.
+  - The scraper skips link lists ("Also, read: ...") and, in PDFs, abbreviation pages and over-long chunks.
+  - The scraper's HTTP client is closed after each run and asks for PDFs when PDF reading is on.
+  - Competitor notes no longer show the same citation twice.
+
 - User-facing text now says "market, company or topic" instead of "company or industry".
 
 - Briefs drifted to the global market (global market size, DoorDash and Uber Eats for a Nepal query). The Researcher now names the focus of the query, adds it to every search, ranks on-focus results first and keeps at most three background results, labelled as such for the Analyst.

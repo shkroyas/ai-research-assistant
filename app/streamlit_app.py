@@ -7,7 +7,7 @@ from datetime import datetime
 import streamlit as st
 
 from market_research import pipeline
-from market_research.config import Settings
+from market_research.config import Settings, configure_logging
 from market_research.intake import MAX_QUERY_CHARS
 from market_research.llm import PROVIDER_LABELS, LLMError, available_providers
 from market_research.models import ResearchState
@@ -123,6 +123,7 @@ def sidebar(settings: Settings) -> tuple[str | None, Settings]:
 
 
 def run_research(query: str, settings: Settings, provider: str) -> Run | None:
+    orchestrator = None
     try:
         orchestrator = pipeline.build_orchestrator(settings, provider)
         with st.status("Running agents...", expanded=True) as status:
@@ -147,6 +148,9 @@ def run_research(query: str, settings: Settings, provider: str) -> Run | None:
             "another model. The details are in the app log."
         )
         return None
+    finally:
+        if orchestrator is not None:
+            orchestrator.close()
     return Run(state=state, model_label=PROVIDER_LABELS[provider], finished_at=datetime.now())
 
 
@@ -165,6 +169,7 @@ def main() -> None:
 
     try:
         settings = Settings()
+        configure_logging(settings.log_level)
         provider, settings = sidebar(settings)
     except ValueError as exc:
         st.error(f"Configuration problem: {exc}")
