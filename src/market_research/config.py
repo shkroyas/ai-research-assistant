@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     # Also read PDF reports found in search results (first 20 pages, up to 10 MB).
     read_pdfs: bool = False
 
+    # Low but not zero: runs stay consistent while wording can still vary slightly.
+    llm_temperature: float = Field(default=0.2, ge=0.0, le=1.0)
+
     max_search_results: int = Field(default=5, ge=1, le=10)
     max_revisions: int = Field(default=1, ge=0, le=1)
     log_level: str = "INFO"

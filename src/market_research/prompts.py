@@ -50,6 +50,9 @@ Rules:
   - comparison: the companies being compared.
   - topic: the leading companies in the topic, if the findings name any.
   If no competitor is supported by the findings, return an empty list.
+  When more than two qualify, choose the ones that the most findings mention,
+  then the largest by the evidence (share, revenue or users), so the choice is
+  stable from run to run. Order the findings you use by id.
 - Never repeat redacted or masked figures (such as "US$ **** million"). If a key
   number is missing or hidden, list it under missing_information.
 - Do not invent numbers, dates or names that are not in the findings.

@@ -70,7 +70,7 @@ def intake_message(state: ResearchState) -> str:
 def parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="research-brief",
-        description="Produce a sourced research brief for a company or industry.",
+        description="Produce a sourced research brief for a market, company, comparison or topic.",
     )
     parser.add_argument("query", help='for example "Analyze the food delivery market in Nepal"')
     parser.add_argument(

@@ -10,7 +10,7 @@ A user types a company or an industry and receives a short, sourced research bri
 
 ### R1 User interface
 
-- **R1.1** A Streamlit page offers a text input for a company or industry and a **Run research** button.
+- **R1.1** A Streamlit page offers a text input for the request (a market, company, comparison or topic; see spec 006) and a **Run research** button.
 - **R1.2** A blank query shows a warning and starts no agents.
 - **R1.3** While agents run, the page shows each completed step.
 - **R1.4** The user can choose the model (Claude on Bedrock or Groq). Groq is offered only when at least one key is configured.

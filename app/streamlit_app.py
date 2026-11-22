@@ -159,8 +159,8 @@ def main() -> None:
     init_state()
     st.title("AI Research Assistant")
     st.caption(
-        "Four agents (Orchestrator, Researcher, Analyst, Critic) turn a company or industry "
-        "into a short, sourced research brief."
+        "Four agents (Orchestrator, Researcher, Analyst, Critic) turn a market, company, "
+        "comparison or topic into a short, sourced research brief."
     )
 
     try:
@@ -188,7 +188,7 @@ def main() -> None:
 
     if submitted:
         if not query.strip():
-            st.warning("Please enter a company or industry.")
+            st.warning("Please enter a market, company or topic to research.")
         else:
             run = run_research(query, settings, provider)
             if run is not None and not run.state.intake.proceed:

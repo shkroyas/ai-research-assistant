@@ -1,11 +1,11 @@
 # AI Research Assistant
 
-A multi-agent market research app. Type a company or an industry, for example *"Analyze the food delivery market in Nepal"*, and four agents work in sequence to produce a short, sourced research brief:
+A multi-agent market research app. Type a market, a company, a comparison or a business topic, for example *"Analyze the food delivery market in Nepal"* or *"Research Tesla and its main competitors"*, and four agents work in sequence to produce a short, sourced research brief. Vague requests get a clarifying question instead of a guess.
 
 | Agent | Job |
 | --- | --- |
-| **Orchestrator** | Receives the query, runs the workflow, enforces the one-revision limit |
-| **Researcher** | Searches the web (Tavily) or, without a key, uses clearly labelled sample data |
+| **Orchestrator** | Receives the query, starts the workflow, stops early if the request needs clarifying, enforces the one-revision limit |
+| **Researcher** | Checks the request, then searches the web (Tavily) and reads the source pages, or, without a key, uses clearly labelled sample data |
 | **Analyst** | Writes the brief using only the numbered findings, citing each claim as `[F1]`, `[F2]` |
 | **Critic** | Checks evidence and coverage, approves or requests at most one revision |
 
@@ -103,7 +103,7 @@ pip install -e .
 streamlit run app/streamlit_app.py
 ```
 
-Open http://localhost:8501, pick a model in the sidebar, type a company or industry (or click an example), and click **Run research**.
+Open http://localhost:8501, pick a model in the sidebar, type a market, company, comparison or topic (or click an example), and click **Run research**.
 
 The results page has a metric row (findings, sources, citation coverage, Critic verdict, run time) and five tabs:
 
@@ -111,11 +111,11 @@ The results page has a metric row (findings, sources, citation coverage, Critic 
 | --- | --- |
 | **Brief** | Summary, up to two competitors, key observations, sources and missing information. Each `F#` citation links to its source. |
 | **Evidence** | Every finding passed to the Analyst, with its domain, whether it came from the full page or a snippet, and whether the brief cites it |
-| **Quality** | The quality report and the Critic's review |
+| **Quality** | The request type and focus, the quality report and the Critic's review |
 | **Agent trace** | Every handoff between agents, in order, with durations |
 | **Export** | The brief as Markdown and the full run as JSON |
 
-The sidebar also lets you switch page reading on or off, set the search depth, and reopen earlier runs from the same session.
+The sidebar also lets you switch page reading and PDF reading on or off, set the number of results per search, and reopen earlier runs from the same session.
 
 To get a brief without the UI:
 
@@ -169,6 +169,7 @@ All settings are environment variables, read from `.env`. See [`.env.example`](.
 | `TAVILY_API_KEY` | unset | Enables live web search |
 | `MAX_SEARCH_RESULTS` | `5` | Results per search query |
 | `SCRAPE_PAGES` | `true` | Read each result page and keep its most relevant passage |
+| `LLM_TEMPERATURE` | `0.2` | Model randomness (0 to 1). Low keeps runs consistent while allowing slight variation |
 | `READ_PDFS` | `false` | Also read PDF reports in the results (first 20 pages, up to 10 MB). Also a switch in the sidebar |
 | `MAX_REVISIONS` | `1` | Critic revision limit (0 or 1) |
 
@@ -263,6 +264,7 @@ Work is planned in [`specs/`](specs/README.md) before it is built. Each spec lis
 - The sample dataset is small and illustrative, intended only for offline demos.
 - Page reading does not run JavaScript, so content rendered only in the browser falls back to the search snippet. Paywalled pages are not read.
 - PDF reports are read only when switched on, and only their first 20 pages. Text from multi-column layouts and tables can come out jumbled.
+- Runs are consistent but not identical: the model uses a low temperature (0.2) and a fixed rule for choosing competitors, but live search results change over time.
 - Briefs are drafts for a person to review, not verified research.
 
 ---

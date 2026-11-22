@@ -6,6 +6,8 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Fixed
 
+- User-facing text now says "market, company or topic" instead of "company or industry".
+
 - Briefs drifted to the global market (global market size, DoorDash and Uber Eats for a Nepal query). The Researcher now names the focus of the query, adds it to every search, ranks on-focus results first and keeps at most three background results, labelled as such for the Analyst.
 - Redacted figures such as `US$ ****** million in ****` and markdown table noise no longer reach the brief: they are removed from snippets and page passages, and code flags any that remain.
 
@@ -15,6 +17,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - Clarifying questions and declines: vague or ambiguous requests get one clarifying question with ready-to-run suggestions, and harmful or off-topic requests are declined with a reason, before any search (spec 007).
 - Safety: failed searches are skipped, model calls time out, extra competitors and blank lines from the model are trimmed, the app shows a message instead of a traceback, the query box is limited to 400 characters, the scraper never fetches private or metadata addresses, and prompts treat sources as untrusted (spec 007).
 - Optional PDF report reading: a "Read PDF reports" switch in the sidebar (`READ_PDFS`, off by default) reads the first 20 pages of PDFs up to 10 MB and keeps the most relevant passage (spec 008).
+- Consistent runs: model calls use a low temperature (`LLM_TEMPERATURE`, default 0.2; dropped automatically for models that reject it), and the Analyst picks the competitors the most findings mention (spec 009).
 - Grounding rule: a competitor supported only by background findings blocks approval.
 - Focus coverage in the quality report, an "About <focus>" metric in the Quality tab, and an "On focus" column in the Evidence tab.
 - Spec 005 with acceptance criteria and traceability.
