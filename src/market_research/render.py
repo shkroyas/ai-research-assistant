@@ -1,11 +1,18 @@
 """Render a finished research state as Markdown for display and download."""
 
-from market_research.models import ResearchState
+from market_research.grounding import cited_ids
+from market_research.models import Competitor, ResearchState
 
 SAMPLE_NOTICE = (
     "> **Sample data notice:** some or all findings come from the built-in sample "
     "dataset, not live web search. Treat them as illustrative."
 )
+
+
+def note_with_refs(competitor: Competitor) -> str:
+    """The competitor note followed by the finding ids it does not already cite."""
+    missing = [i for i in competitor.finding_ids if i not in cited_ids(competitor.note)]
+    return f"{competitor.note} [{', '.join(missing)}]" if missing else competitor.note
 
 
 def brief_to_markdown(state: ResearchState) -> str:
@@ -16,14 +23,15 @@ def brief_to_markdown(state: ResearchState) -> str:
     lines = [f"# Research brief: {state.query}", ""]
     if state.uses_sample_data:
         lines += [SAMPLE_NOTICE, ""]
+    if state.notice:
+        lines += [f"> **Note:** {state.notice}", ""]
 
     lines += ["## Summary", "", brief.summary, ""]
 
     lines += ["## Competitors", ""]
     if brief.competitors:
         for c in brief.competitors:
-            refs = f" [{', '.join(c.finding_ids)}]" if c.finding_ids else ""
-            lines.append(f"- **{c.name}**: {c.note}{refs}")
+            lines.append(f"- **{c.name}**: {note_with_refs(c)}")
     else:
         lines.append("- None identified from the available evidence.")
     lines.append("")

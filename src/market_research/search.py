@@ -61,6 +61,11 @@ class SampleDataSearch:
             for path in sorted(sample_dir.glob("*.json"))
         ]
 
+    @property
+    def topics(self) -> list[str]:
+        """The topics the bundled sample datasets cover, e.g. ['food delivery market in Nepal']."""
+        return [d["topic"] for d in self._datasets if d.get("topic")]
+
     def search(self, query: str, max_results: int = 5) -> list[SearchResult]:
         lowered = query.lower()
         best = max(

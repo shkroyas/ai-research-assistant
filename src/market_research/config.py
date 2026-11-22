@@ -1,9 +1,9 @@
 """Application settings, loaded from environment variables or a local .env file."""
 
-from functools import lru_cache
+import logging
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 SUPPORTED_PROVIDERS = ("bedrock", "groq")
@@ -32,10 +32,23 @@ class Settings(BaseSettings):
 
     # Read each result page and keep its most relevant passage (see scraper.py).
     scrape_pages: bool = True
+    # Also read PDF reports found in search results (first 20 pages, up to 10 MB).
+    read_pdfs: bool = False
+
+    # Low but not zero: runs stay consistent while wording can still vary slightly.
+    llm_temperature: float = Field(default=0.2, ge=0.0, le=1.0)
 
     max_search_results: int = Field(default=5, ge=1, le=10)
     max_revisions: int = Field(default=1, ge=0, le=1)
     log_level: str = "INFO"
+
+    @field_validator("groq_api_keys", "tavily_api_key", "aws_profile", mode="before")
+    @classmethod
+    def blank_is_unset(cls, value: object) -> object:
+        """'TAVILY_API_KEY=' or a value of only spaces means the key is not set."""
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value.strip() if isinstance(value, str) else value
 
     @property
     def provider_order(self) -> list[str]:
@@ -57,7 +70,14 @@ class Settings(BaseSettings):
         return bool(self.tavily_api_key)
 
 
-@lru_cache
-def get_settings() -> Settings:
-    """Return a cached Settings instance."""
-    return Settings()
+def configure_logging(level: str) -> None:
+    """Apply LOG_LEVEL to the app's own loggers; an unknown level falls back to INFO.
+
+    Records go to the root handlers. If nothing has configured logging yet, a
+    plain stderr handler is added once, so repeated calls (Streamlit reruns) are safe.
+    """
+    resolved = logging.getLevelName(level.strip().upper())
+    logging.getLogger("market_research").setLevel(
+        resolved if isinstance(resolved, int) else logging.INFO
+    )
+    logging.basicConfig(format="%(levelname)s %(name)s: %(message)s")

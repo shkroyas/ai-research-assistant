@@ -6,7 +6,9 @@ relevant to the query. It never raises: a page that cannot be used returns a
 ScrapeResult with ok=False and a reason, and the Researcher keeps the snippet.
 """
 
+import io
 import ipaddress
+import logging
 import re
 import socket
 from collections.abc import Callable
@@ -18,10 +20,13 @@ import httpx
 from bs4 import BeautifulSoup
 from pydantic import BaseModel
 
-from market_research.evidence import MASKED, clean_evidence
+from market_research.evidence import clean_evidence, has_masked
 
 USER_AGENT = "ai-research-assistant/1.0 (+https://github.com/shkroyas/ai-research-assistant)"
 HTML_TYPES = ("text/html", "application/xhtml+xml")
+PDF_TYPE = "application/pdf"
+# A footnote number glued to a unit in PDF text, e.g. "billion2" or "%3".
+FOOTNOTE_MARK = re.compile(r"\b(thousand|million|billion|trillion|percent)\d{1,2}\b|(%)\d{1,2}\b")
 BOILERPLATE_TAGS = (
     "script",
     "style",
@@ -37,6 +42,10 @@ BOILERPLATE_TAGS = (
 )
 MIN_PARAGRAPH_CHARS = 60
 MAX_PASSAGE_CHARS = 600
+# A block whose text is mostly links is a "read also" list or a menu, not an article.
+MAX_LINK_SHARE = 0.5
+# PDF text made mostly of all-caps words is an abbreviations list or a table of contents.
+MAX_ACRONYM_SHARE = 0.15
 STOP_WORDS = {
     "a", "about", "an", "analyse", "analyze", "and", "are", "compare", "comparison",
     "does", "for", "from", "give", "how", "in", "is", "me", "of", "on", "or",
@@ -66,6 +75,74 @@ def is_public_host(host: str, resolve: Callable[..., list] = socket.getaddrinfo)
     return all(address.is_global for address in addresses)
 
 
+def pdf_paragraphs(data: bytes, max_pages: int) -> list[str]:
+    """Readable paragraphs from the first pages of a PDF report.
+
+    PDF text has no reliable paragraph marks, so lines are joined and the text is
+    cut into sentence groups of a few hundred characters for passage scoring.
+    """
+    from pypdf import PdfReader
+    from pypdf.errors import PdfReadError
+
+    try:
+        reader = PdfReader(io.BytesIO(data))
+        if reader.is_encrypted:
+            raise _Skip("PDF is encrypted")
+        pages = [page.extract_text() or "" for page in reader.pages[:max_pages]]
+    except _Skip:
+        raise
+    except (PdfReadError, ValueError, KeyError, TypeError, OSError) as exc:
+        logging.getLogger(__name__).info("Could not read PDF: %s", exc)
+        raise _Skip("PDF could not be read") from exc
+    return [chunk for page in pages for chunk in pdf_text_chunks(page)]
+
+
+def pdf_text_chunks(page: str) -> list[str]:
+    """Cut one page of PDF text into passages of at most MAX_PASSAGE_CHARS.
+
+    Sentences are grouped until a chunk is half the passage limit. Text with no
+    full stops (lists, tables) is cut by words instead of becoming one huge chunk,
+    and chunks that are mostly all-caps abbreviations are dropped.
+    """
+    text = " ".join(page.replace("-\n", "").split())
+    text = FOOTNOTE_MARK.sub(lambda m: m.group(1) or m.group(2), text)  # "billion2" -> "billion"
+    target = MAX_PASSAGE_CHARS // 2
+    pieces: list[str] = []
+    for sentence in re.split(r"(?<=[.!?])\s+", text):
+        too_long = len(sentence) > MAX_PASSAGE_CHARS
+        pieces += _split_words(sentence, target) if too_long else [sentence]
+    chunks: list[str] = []
+    chunk = ""
+    for piece in pieces:
+        if chunk and len(chunk) + 1 + len(piece) > MAX_PASSAGE_CHARS:
+            chunks.append(chunk)  # never let a chunk grow past the passage limit
+            chunk = ""
+        chunk = f"{chunk} {piece}".strip()
+        if len(chunk) >= target:
+            chunks.append(chunk)
+            chunk = ""
+    chunks.append(chunk)
+    return [c for c in chunks if len(c) >= MIN_PARAGRAPH_CHARS and not _mostly_acronyms(c)]
+
+
+def _split_words(text: str, size: int) -> list[str]:
+    pieces: list[str] = []
+    current = ""
+    for word in text.split():
+        if current and len(current) + 1 + len(word) > size:
+            pieces.append(current)
+            current = word
+        else:
+            current = f"{current} {word}".strip()
+    return [*pieces, current] if current else pieces
+
+
+def _mostly_acronyms(text: str) -> bool:
+    words = re.findall(r"[A-Za-z]{2,}", text)
+    caps = sum(w.isupper() for w in words)
+    return bool(words) and caps / len(words) > MAX_ACRONYM_SHARE
+
+
 class ScrapeResult(BaseModel):
     url: str
     ok: bool
@@ -88,9 +165,17 @@ def extract_paragraphs(html: str) -> list[str]:
     paragraphs = []
     for block in blocks:
         text = " ".join(block.get_text(" ", strip=True).split())
-        if len(text) >= MIN_PARAGRAPH_CHARS:
+        if len(text) >= MIN_PARAGRAPH_CHARS and _link_share(block, text) <= MAX_LINK_SHARE:
             paragraphs.append(text)
     return paragraphs
+
+
+def _link_share(block, text: str) -> float:
+    """Share of a block's text that sits inside links, e.g. 1.0 for a list of headlines."""
+    if not hasattr(block, "find_all"):
+        return 0.0
+    linked = sum(len(" ".join(a.get_text(" ", strip=True).split())) for a in block.find_all("a"))
+    return linked / len(text) if text else 0.0
 
 
 def best_passage(
@@ -103,7 +188,7 @@ def best_passage(
     """
     terms = query_terms(query)
     focus_terms = {t for f in focus for t in query_terms(f)}
-    paragraphs = [p for p in paragraphs if not MASKED.search(p)]
+    paragraphs = [p for p in paragraphs if not has_masked(p)]
     if not paragraphs:
         return None
 
@@ -135,11 +220,16 @@ class PageScraper:
         max_bytes: int = 2_000_000,
         max_workers: int = 4,
         resolve: Callable[..., list] = socket.getaddrinfo,
+        read_pdfs: bool = False,
+        max_pdf_bytes: int = 10_000_000,
+        max_pdf_pages: int = 20,
     ) -> None:
+        accept = ",".join((*HTML_TYPES, PDF_TYPE) if read_pdfs else HTML_TYPES)
+        self._owns_client = client is None
         self._client = client or httpx.Client(
             timeout=timeout,
             follow_redirects=True,
-            headers={"User-Agent": USER_AGENT, "Accept": "text/html,application/xhtml+xml"},
+            headers={"User-Agent": USER_AGENT, "Accept": accept},
         )
         self._client.headers["User-Agent"] = USER_AGENT
         self._resolve = resolve
@@ -150,7 +240,15 @@ class PageScraper:
         ]
         self.max_bytes = max_bytes
         self.max_workers = max_workers
+        self.read_pdfs = read_pdfs
+        self.max_pdf_bytes = max_pdf_bytes
+        self.max_pdf_pages = max_pdf_pages
         self._robots: dict[str, RobotFileParser | None] = {}
+
+    def close(self) -> None:
+        """Close the HTTP client if this scraper created it; a shared client is left open."""
+        if self._owns_client:
+            self._client.close()
 
     def scrape_many(
         self, urls: list[str], query: str, focus: list[str] | tuple[str, ...] = ()
@@ -171,8 +269,8 @@ class PageScraper:
                 return ScrapeResult(url=url, ok=False, reason="not an http(s) URL")
             if not self._allowed(url):
                 return ScrapeResult(url=url, ok=False, reason="disallowed by robots.txt")
-            html = self._fetch_html(url)
-            passage = best_passage(extract_paragraphs(html), query, focus)
+            paragraphs = self._fetch_paragraphs(url)
+            passage = best_passage(paragraphs, query, focus)
             if passage is None:
                 return ScrapeResult(url=url, ok=False, reason="no relevant passage on page")
             return ScrapeResult(url=url, ok=True, passage=passage)
@@ -187,19 +285,26 @@ class PageScraper:
         if not is_public_host(request.url.host, self._resolve):
             raise _Skip("not a public address")
 
-    def _fetch_html(self, url: str) -> str:
+    def _fetch_paragraphs(self, url: str) -> list[str]:
+        """Download a web page (or, when enabled, a PDF report) and return its paragraphs."""
         with self._client.stream("GET", url) as response:
             if response.status_code >= 400:
                 raise _Skip(f"HTTP {response.status_code}")
-            content_type = response.headers.get("content-type", "").split(";")[0].strip()
-            if content_type not in HTML_TYPES:
+            content_type = response.headers.get("content-type", "").split(";")[0].strip().lower()
+            if content_type == PDF_TYPE and not self.read_pdfs:
+                raise _Skip("PDF report (PDF reading is off)")
+            if content_type not in (*HTML_TYPES, PDF_TYPE):
                 raise _Skip(f"not HTML ({content_type or 'unknown type'})")
+            is_pdf = content_type == PDF_TYPE
+            limit = self.max_pdf_bytes if is_pdf else self.max_bytes
             body = bytearray()
             for chunk in response.iter_bytes():
                 body.extend(chunk)
-                if len(body) > self.max_bytes:
-                    raise _Skip("page larger than the size limit")
-            return body.decode(response.encoding or "utf-8", errors="replace")
+                if len(body) > limit:
+                    raise _Skip(f"{'PDF' if is_pdf else 'page'} larger than the size limit")
+            if is_pdf:
+                return pdf_paragraphs(bytes(body), self.max_pdf_pages)
+            return extract_paragraphs(body.decode(response.encoding or "utf-8", errors="replace"))
 
     def _robots_for(self, url: str) -> RobotFileParser | None:
         parts = urlsplit(url)

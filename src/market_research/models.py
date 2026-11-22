@@ -139,6 +139,8 @@ class ResearchState(BaseModel):
     trace: list[StepLog] = Field(default_factory=list)
     quality: QualityReport | None = None
     duration_ms: int | None = None
+    # A plain note for the reader, e.g. that offline sample data does not cover the request.
+    notice: str | None = None
 
     @field_validator("query")
     @classmethod

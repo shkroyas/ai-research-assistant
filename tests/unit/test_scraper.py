@@ -64,7 +64,7 @@ def test_best_passage_picks_most_relevant_paragraph() -> None:
 
 
 def test_best_passage_trims_long_text_on_a_word_boundary() -> None:
-    long = "Nepal food delivery " + "word " * 300
+    long = "Nepal food delivery " + "grows in the city of Kathmandu and beyond " * 40
     passage = best_passage([long], QUERY)
     assert passage is not None and len(passage) <= 600 and passage.endswith("...")
 
@@ -115,7 +115,7 @@ def test_robots_txt_forbidden_means_disallow_all() -> None:
     [
         (
             httpx.Response(200, content=b"%PDF", headers={"content-type": "application/pdf"}),
-            "not HTML (application/pdf)",
+            "PDF report (PDF reading is off)",
         ),
         (html_response(status=503), "HTTP 503"),
         (

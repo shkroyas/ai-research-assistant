@@ -16,7 +16,7 @@ import logging
 import re
 import time
 from collections.abc import Callable, Sequence
-from typing import Any, Protocol, TypeVar
+from typing import Any, ClassVar, Protocol, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -63,6 +63,7 @@ class BedrockClaudeClient:
         aws_profile: str | None = None,
         api: str = "invoke",
         client: Any | None = None,
+        temperature: float | None = None,
     ) -> None:
         if api not in BEDROCK_APIS:
             raise ValueError(f"Unknown Bedrock API {api!r}; use one of {BEDROCK_APIS}")
@@ -82,15 +83,33 @@ class BedrockClaudeClient:
         self._client = client
         self.model_id = model_id
         self.name = f"Bedrock {model_id}"
+        self.temperature = None if model_id in self._no_temperature else temperature
+
+    # Model ids that rejected `temperature` in this process, so later runs skip it.
+    _no_temperature: ClassVar[set[str]] = set()
 
     def complete(self, system: str, prompt: str, max_tokens: int = 4000) -> str:
+        request: dict[str, Any] = {
+            "model": self.model_id,
+            "max_tokens": max_tokens,
+            "system": system,
+            "messages": [{"role": "user", "content": prompt}],
+        }
+        if self.temperature is not None:
+            request["temperature"] = self.temperature
         try:
-            response = self._client.messages.create(
-                model=self.model_id,
-                max_tokens=max_tokens,
-                system=system,
-                messages=[{"role": "user", "content": prompt}],
-            )
+            try:
+                response = self._client.messages.create(**request)
+            except Exception as exc:
+                # Newer Claude models reject sampling settings. Drop it for this
+                # session and retry once, rather than failing the run.
+                if "temperature" not in request or "temperature" not in str(exc).lower():
+                    raise
+                logger.info("%s does not accept temperature; using its default", self.name)
+                self.temperature = None
+                BedrockClaudeClient._no_temperature.add(self.model_id)
+                del request["temperature"]
+                response = self._client.messages.create(**request)
         except Exception as exc:  # SDK raises typed errors; callers only need "failed"
             raise LLMError(f"{self.name} request failed: {exc}") from exc
 
@@ -178,7 +197,9 @@ class GroqClient:
         base_delay: float = 2.0,
         client_factory: Callable[[str], Any] | None = None,
         sleep: Callable[[float], None] = time.sleep,
+        temperature: float | None = None,
     ) -> None:
+        self.temperature = temperature
         self.rotator = KeyRotator(api_keys)
         self.model = model
         self.max_rounds = max_rounds
@@ -195,9 +216,11 @@ class GroqClient:
 
     def _call(self, system: str, prompt: str, max_tokens: int) -> str:
         client = self._clients[self.rotator.key]
+        sampling = {} if self.temperature is None else {"temperature": self.temperature}
         response = client.chat.completions.create(
             model=self.model,
             max_tokens=max_tokens,
+            **sampling,
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": prompt},
@@ -347,5 +370,10 @@ def build_llm(settings: Any, provider: str | None = None) -> LLMClient:
             region=settings.aws_region,
             aws_profile=settings.aws_profile,
             api=settings.bedrock_api,
+            temperature=settings.llm_temperature,
         )
-    return GroqClient(api_keys=settings.groq_key_list, model=settings.groq_model)
+    return GroqClient(
+        api_keys=settings.groq_key_list,
+        model=settings.groq_model,
+        temperature=settings.llm_temperature,
+    )

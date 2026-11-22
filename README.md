@@ -1,11 +1,11 @@
 # AI Research Assistant
 
-A multi-agent market research app. Type a company or an industry, for example *"Analyze the food delivery market in Nepal"*, and four agents work in sequence to produce a short, sourced research brief:
+A multi-agent market research app. Type a market, a company, a comparison or a business topic, for example *"Analyze the food delivery market in Nepal"* or *"Research Tesla and its main competitors"*, and four agents work in sequence to produce a short, sourced research brief. Vague requests get a clarifying question instead of a guess.
 
 | Agent | Job |
 | --- | --- |
-| **Orchestrator** | Receives the query, runs the workflow, enforces the one-revision limit |
-| **Researcher** | Searches the web (Tavily) or, without a key, uses clearly labelled sample data |
+| **Orchestrator** | Receives the query, starts the workflow, stops early if the request needs clarifying, enforces the one-revision limit |
+| **Researcher** | Checks the request, then searches the web (Tavily) and reads the source pages, or, without a key, uses clearly labelled sample data |
 | **Analyst** | Writes the brief using only the numbered findings, citing each claim as `[F1]`, `[F2]` |
 | **Critic** | Checks evidence and coverage, approves or requests at most one revision |
 
@@ -18,6 +18,7 @@ The brief contains a **summary**, **up to two competitors**, **key observations*
 ## Contents
 
 - [How it works](#how-it-works)
+- [Screenshots](#screenshots)
 - [What you need](#what-you-need)
 - [Run it locally](#run-it-locally)
 - [Run with Docker](#run-with-docker)
@@ -54,13 +55,41 @@ Every handoff passes a single Pydantic object, `ResearchState`, holding the quer
 
 **Stays on the market you asked about.** The Researcher first names the query's focus (for example *Nepal*, with local names such as *Kathmandu*), makes every search include it, and ranks results that mention it first. At most three general results are kept, marked as background, so a brief about Nepal is not built on global figures or on DoorDash and Uber Eats. Redacted figures such as `US$ ****` and table noise are removed from the evidence before the Analyst sees it.
 
-**Evidence first.** The Researcher numbers every finding (`F1`, `F2`, ...). The Analyst may only cite those ids. Plain code (`grounding.py`) then flags uncited observations, invented citations competitors with no supporting finding, competitors backed only by background findings, and masked figures, and the Critic sees those flags.
+**Evidence first.** The Researcher numbers every finding (`F1`, `F2`, ...). The Analyst may only cite those ids. Plain code (`grounding.py`) then flags uncited observations, invented citations, competitors with no supporting finding, competitors backed only by background findings, and masked figures, and the Critic sees those flags.
 
 **Quality you can see.** Each run ends with a quality report computed in code: citation coverage, how many findings are about the focus, distinct source domains, how many findings came from full pages, and any remaining citation problems. Every agent step is timed.
 
 **Choose your model.** A picker in the sidebar switches between **Claude on Amazon Bedrock** and **Groq**. Groq appears only when at least one Groq key is configured.
 
 **Key rotation for Groq.** Several Groq keys can be configured. On HTTP 429 (too many requests) the client switches to the next key at once, and only when every key is rate limited does it wait with back-off, honouring `retry-after`. On HTTP 401 or 403 (invalid or forbidden key) that key is disabled for the session and the next key is used, with no waiting.
+
+## Screenshots
+
+Taken from a live run with Claude on Amazon Bedrock and Tavily search.
+
+**Start page.** Pick the model in the sidebar, type a request or try an example.
+
+![Start page](docs/screenshots/01-landing.png)
+
+**Brief.** *"Analyze the food delivery market in Nepal"*: a summary, two local competitors, observations that cite findings, sources and missing information.
+
+![Brief tab](docs/screenshots/02-brief.png)
+
+**Evidence.** Every finding, whether it was cited, whether it is about the focus, and whether it came from the full page or a search snippet.
+
+![Evidence tab](docs/screenshots/03-evidence.png)
+
+**Quality.** Citation coverage, findings about the focus, source domains and the Critic's verdict, all measured in code.
+
+![Quality tab](docs/screenshots/04-quality.png)
+
+**Agent trace.** Each handoff between agents, in order, with how long it took.
+
+![Agent trace tab](docs/screenshots/05-trace.png)
+
+**Clarifying question.** *"Research Mercury"* is ambiguous, so the app asks which Mercury is meant and offers ready-to-run suggestions.
+
+![Clarifying question](docs/screenshots/06-clarify.png)
 
 ---
 
@@ -90,7 +119,8 @@ cd ai-research-assistant
 
 # 2. Configure
 cp .env.example .env
-#    then edit .env and add your keys (see Configuration)
+#    then edit .env: uncomment GROQ_API_KEYS and TAVILY_API_KEY and add your keys
+#    (see Configuration). Left commented, the app runs offline on sample data.
 
 # 3a. Install and run with uv (recommended)
 uv sync
@@ -103,7 +133,7 @@ pip install -e .
 streamlit run app/streamlit_app.py
 ```
 
-Open http://localhost:8501, pick a model in the sidebar, type a company or industry (or click an example), and click **Run research**.
+Open http://localhost:8501, pick a model in the sidebar, type a market, company, comparison or topic (or click an example), and click **Run research**.
 
 The results page has a metric row (findings, sources, citation coverage, Critic verdict, run time) and five tabs:
 
@@ -111,11 +141,11 @@ The results page has a metric row (findings, sources, citation coverage, Critic 
 | --- | --- |
 | **Brief** | Summary, up to two competitors, key observations, sources and missing information. Each `F#` citation links to its source. |
 | **Evidence** | Every finding passed to the Analyst, with its domain, whether it came from the full page or a snippet, and whether the brief cites it |
-| **Quality** | The quality report and the Critic's review |
+| **Quality** | The request type and focus, the quality report and the Critic's review |
 | **Agent trace** | Every handoff between agents, in order, with durations |
 | **Export** | The brief as Markdown and the full run as JSON |
 
-The sidebar also lets you switch page reading on or off, set the search depth, and reopen earlier runs from the same session.
+The sidebar also lets you switch page reading and PDF reading on or off, set the number of results per search, and reopen earlier runs from the same session.
 
 To get a brief without the UI:
 
@@ -169,7 +199,10 @@ All settings are environment variables, read from `.env`. See [`.env.example`](.
 | `TAVILY_API_KEY` | unset | Enables live web search |
 | `MAX_SEARCH_RESULTS` | `5` | Results per search query |
 | `SCRAPE_PAGES` | `true` | Read each result page and keep its most relevant passage |
+| `LLM_TEMPERATURE` | `0.2` | Model randomness (0 to 1). Low keeps runs consistent while allowing slight variation |
+| `READ_PDFS` | `false` | Also read PDF reports in the results (first 20 pages, up to 10 MB). Also a switch in the sidebar |
 | `MAX_REVISIONS` | `1` | Critic revision limit (0 or 1) |
+| `LOG_LEVEL` | `INFO` | Log level for the app's own modules (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
 
 Only using Groq? Set `LLM_PROVIDERS=groq`. Only Claude? Set `LLM_PROVIDERS=bedrock`.
 
@@ -261,6 +294,8 @@ Work is planned in [`specs/`](specs/README.md) before it is built. Each spec lis
 - Brief quality depends on what web search returns; niche or very local topics may have thin coverage, which the brief reports under *Missing information*.
 - The sample dataset is small and illustrative, intended only for offline demos.
 - Page reading does not run JavaScript, so content rendered only in the browser falls back to the search snippet. Paywalled pages are not read.
+- PDF reports are read only when switched on, and only their first 20 pages. Text from multi-column layouts and tables can come out jumbled.
+- Runs are consistent but not identical. Groq uses a low temperature (0.2); Claude Opus 4.6 on Bedrock does not accept the setting and uses its default, so there the fixed rule for choosing competitors does the work (5 of 6 Nepal runs named the same two). Live search results also change over time.
 - Briefs are drafts for a person to review, not verified research.
 
 ---

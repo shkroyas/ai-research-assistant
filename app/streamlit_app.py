@@ -7,7 +7,7 @@ from datetime import datetime
 import streamlit as st
 
 from market_research import pipeline
-from market_research.config import Settings
+from market_research.config import Settings, configure_logging
 from market_research.intake import MAX_QUERY_CHARS
 from market_research.llm import PROVIDER_LABELS, LLMError, available_providers
 from market_research.models import ResearchState
@@ -91,6 +91,13 @@ def sidebar(settings: Settings) -> tuple[str | None, Settings]:
             "passage instead of the short search snippet.",
             disabled=not settings.web_search_enabled,
         )
+        read_pdfs = st.toggle(
+            "Read PDF reports",
+            value=settings.read_pdfs,
+            help="Also read PDF reports in the results (first 20 pages, up to 10 MB each). "
+            "Slower, and PDF text can be messy; when off, a PDF's search snippet is used.",
+            disabled=not settings.web_search_enabled or not scrape,
+        )
         depth = st.slider(
             "Results per search", 1, 10, settings.max_search_results, help="Up to 4 searches run"
         )
@@ -109,11 +116,14 @@ def sidebar(settings: Settings) -> tuple[str | None, Settings]:
             )
             st.button("Clear history", on_click=clear_history, width="stretch")
 
-    tuned = settings.model_copy(update={"scrape_pages": scrape, "max_search_results": depth})
+    tuned = settings.model_copy(
+        update={"scrape_pages": scrape, "read_pdfs": read_pdfs, "max_search_results": depth}
+    )
     return provider, tuned
 
 
 def run_research(query: str, settings: Settings, provider: str) -> Run | None:
+    orchestrator = None
     try:
         orchestrator = pipeline.build_orchestrator(settings, provider)
         with st.status("Running agents...", expanded=True) as status:
@@ -138,6 +148,9 @@ def run_research(query: str, settings: Settings, provider: str) -> Run | None:
             "another model. The details are in the app log."
         )
         return None
+    finally:
+        if orchestrator is not None:
+            orchestrator.close()
     return Run(state=state, model_label=PROVIDER_LABELS[provider], finished_at=datetime.now())
 
 
@@ -150,12 +163,13 @@ def main() -> None:
     init_state()
     st.title("AI Research Assistant")
     st.caption(
-        "Four agents (Orchestrator, Researcher, Analyst, Critic) turn a company or industry "
-        "into a short, sourced research brief."
+        "Four agents (Orchestrator, Researcher, Analyst, Critic) turn a market, company, "
+        "comparison or topic into a short, sourced research brief."
     )
 
     try:
         settings = Settings()
+        configure_logging(settings.log_level)
         provider, settings = sidebar(settings)
     except ValueError as exc:
         st.error(f"Configuration problem: {exc}")
@@ -179,7 +193,7 @@ def main() -> None:
 
     if submitted:
         if not query.strip():
-            st.warning("Please enter a company or industry.")
+            st.warning("Please enter a market, company or topic to research.")
         else:
             run = run_research(query, settings, provider)
             if run is not None and not run.state.intake.proceed:

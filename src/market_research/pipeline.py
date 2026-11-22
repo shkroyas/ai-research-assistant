@@ -15,7 +15,7 @@ def build_orchestrator(settings: Settings, provider: str | None = None) -> Orche
             llm,
             search,
             max_results=settings.max_search_results,
-            scraper=PageScraper() if settings.scrape_pages else None,
+            scraper=PageScraper(read_pdfs=settings.read_pdfs) if settings.scrape_pages else None,
         ),
         analyst=Analyst(llm),
         critic=Critic(llm),

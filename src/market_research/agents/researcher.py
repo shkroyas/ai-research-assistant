@@ -1,6 +1,10 @@
 """Researcher: plans focused searches and turns results into numbered findings."""
 
+import html
 import logging
+import re
+from datetime import UTC, datetime
+from urllib.parse import parse_qsl, urlencode, urlsplit
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -12,6 +16,7 @@ from market_research.evidence import (
     fallback_kind,
     mentions_focus,
     rank_results,
+    settle_kind,
 )
 from market_research.intake import screen_query
 from market_research.llm import LLMClient, LLMError, complete_json
@@ -32,6 +37,41 @@ logger = logging.getLogger(__name__)
 
 MAX_FINDINGS = 10
 MAX_CLAIM_CHARS = 600
+
+
+# Query parameters that track the visit but do not change the page.
+TRACKING_PARAMS = {"fr", "ref", "fbclid", "gclid", "mc_cid", "mc_eid"}
+
+
+def url_key(url: str) -> str:
+    """One key per page: 'https://a.com/x?p=1&amp;q=2#top' and 'https://a.com/x/?q=2&p=1' match,
+    and tracking parameters such as '?utm_source=x' or '?fr=sycsrp_catchall' are ignored."""
+    parts = urlsplit(html.unescape(url).strip())
+    path = parts.path.rstrip("/") or "/"
+    params = sorted(
+        (k, v)
+        for k, v in parse_qsl(parts.query, keep_blank_values=True)
+        if k.lower() not in TRACKING_PARAMS and not k.lower().startswith("utm_")
+    )
+    return f"{parts.netloc.lower().removeprefix('www.')}{path}?{urlencode(params)}"
+
+
+def text_key(text: str) -> str:
+    """Findings with the same text (a syndicated or mirrored article) share this key."""
+    return re.sub(r"[^a-z0-9]+", "", text.lower())[:160]
+
+
+def drop_repeated_text(findings: list[Finding]) -> list[Finding]:
+    """Keep the first finding of each text and renumber them F1..Fn without gaps."""
+    kept: list[Finding] = []
+    seen: set[str] = set()
+    for finding in findings:
+        key = text_key(finding.claim)
+        if key and key in seen:
+            continue
+        seen.add(key)
+        kept.append(finding.model_copy(update={"id": f"F{len(kept) + 1}"}))
+    return kept
 
 
 class SearchPlan(BaseModel):
@@ -94,8 +134,8 @@ class Researcher:
             plan = complete_json(
                 self.llm,
                 RESEARCHER_SYSTEM,
-                f"User request: {query}\n\nIdentify the request type and focus, then plan 2 to 4 "
-                "web searches.",
+                f"User request: {query}\nToday's date: {datetime.now(UTC):%Y-%m-%d}\n\n"
+                "Identify the request type and focus, then plan 2 to 4 web searches.",
                 SearchPlan,
                 max_tokens=1000,
             )
@@ -107,8 +147,11 @@ class Researcher:
         # A focus of only "global" means the user asked about the whole world: keep it empty.
         # The name fallback is for plans that left the focus out altogether.
         focus = clean_focus(plan.focus if plan.focus else fallback_focus(query))
+        kind, focus = settle_kind(query, plan.kind, focus)
         queries = [q.strip() for q in plan.queries if q.strip()] or [query]
-        return plan.model_copy(update={"focus": focus, "queries": ensure_focus(queries, focus)})
+        return plan.model_copy(
+            update={"kind": kind, "focus": focus, "queries": ensure_focus(queries, focus)}
+        )
 
     def run(self, state: ResearchState) -> ResearchState:
         screened = screen_query(state.query)
@@ -140,7 +183,7 @@ class Researcher:
                 failed[search_query] = type(exc).__name__
                 continue
             for result in found:
-                key = result.url or result.title
+                key = url_key(result.url) if result.url else result.title
                 if key in seen:
                     continue
                 seen.add(key)
@@ -155,20 +198,34 @@ class Researcher:
         ranked = rank_results(results, plan.focus, limit=MAX_FINDINGS)
         pages = self._scrape(state, [r for r, _ in ranked], plan.focus)
 
-        state.findings = [
+        findings = [
             _to_finding(i, result, on_focus, pages.get(result.url or ""), plan.focus)
             for i, (result, on_focus) in enumerate(ranked, start=1)
         ]
+        state.findings = drop_repeated_text(findings)
+        if not state.findings and getattr(self.search, "topics", None):
+            state.notice = (
+                "No sample data matches this request. Without a TAVILY_API_KEY the app "
+                f"searches only its bundled sample data, which covers: "
+                f"{'; '.join(self.search.topics)}."
+            )
         state.log(
             self.name,
             "collected findings",
             count=len(state.findings),
+            duplicates=len(findings) - len(state.findings),
             on_focus=sum(f.on_focus for f in state.findings),
             scraped=sum(f.evidence == "scraped page" for f in state.findings),
             dropped_unusable=dropped,
             sample_data=state.uses_sample_data,
+            **({"notice": state.notice} if state.notice else {}),
         )
         return state
+
+    def close(self) -> None:
+        """Release the page scraper's network connections."""
+        if self.scraper is not None and hasattr(self.scraper, "close"):
+            self.scraper.close()
 
     def _stop(self, state: ResearchState, intake: Intake, checked_by: str) -> ResearchState:
         """Record why the request will not be researched as asked; no search runs."""
