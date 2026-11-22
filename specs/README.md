@@ -16,5 +16,6 @@ Requirements use ids such as `R1.2`. Tasks and tests refer back to those ids, so
 | [002 Release v1.0.0](002-release-v1/requirements.md) | Done except the tag |
 | [003 AWS deployment](003-aws-deployment/requirements.md) | Proposed |
 | [004 Deeper evidence and a complete app](004-evidence-and-app/requirements.md) | Done |
+| [005 Market focus and evidence hygiene](005-market-focus/requirements.md) | In progress |
 
 A spec changes when the plan changes. Update it in the same pull request as the code, so the spec and the code never disagree.
