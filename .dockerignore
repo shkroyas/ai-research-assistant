@@ -16,3 +16,6 @@ samples
 specs
 *.md
 !README.md
+infra
+docs
+*.pdf

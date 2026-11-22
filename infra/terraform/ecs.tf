@@ -76,5 +76,11 @@ resource "aws_ecs_service" "app" {
     container_port   = 8501
   }
 
+  # deploy.yml rolls out new task definitions from main; a later terraform apply
+  # (for example to change desired_count) must not roll the image back.
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
+
   depends_on = [aws_lb_listener.http]
 }

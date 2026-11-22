@@ -6,7 +6,7 @@
 
 Run the app on AWS behind a public HTTPS-capable address, with no keys stored in the image or the repository, and deploy new versions from GitHub.
 
-## Acceptance criteria (draft)
+## Acceptance criteria
 
 - **R1.1** The container image from spec 002 is stored in Amazon ECR in `us-east-1`.
 - **R1.2** The app runs on ECS Fargate behind an Application Load Balancer. Streamlit needs WebSockets and sticky sessions, which the load balancer supports.

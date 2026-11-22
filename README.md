@@ -64,6 +64,8 @@ Every handoff passes a single Pydantic object, `ResearchState`, holding the quer
 
 **Key rotation for Groq.** Several Groq keys can be configured. On HTTP 429 (too many requests) the client switches to the next key at once, and only when every key is rate limited does it wait with back-off, honouring `retry-after`. On HTTP 401 or 403 (invalid or forbidden key) that key is disabled for the session and the next key is used, with no waiting.
 
+**Fails safely.** A failed search is skipped and noted in the trace, model calls time out, model output that breaks a limit is trimmed rather than fatal, and the app shows a short message instead of a traceback. Source pages are untrusted: the scraper never fetches private or cloud metadata addresses (also through redirects), and the agents are told to ignore instructions found inside sources.
+
 ## Screenshots
 
 Taken from a live run with Claude on Amazon Bedrock and Tavily search.
@@ -260,8 +262,6 @@ make format   # auto-fix lint issues and format
 GitHub Actions runs two jobs on every pull request and on every push to `main`: lint plus the full test suite, and a Docker build with a container smoke test.
 
 ---
-
-**Fails safely.** A failed search is skipped and noted in the trace, model calls time out, model output that breaks a limit is trimmed rather than fatal, and the app shows a short message instead of a traceback. Source pages are untrusted: the scraper never fetches private or cloud metadata addresses (also through redirects), and the agents are told to ignore instructions found inside sources.
 
 ## Project structure
 
