@@ -22,6 +22,7 @@ The brief contains a **summary**, **up to two competitors**, **key observations*
 - [What you need](#what-you-need)
 - [Run it locally](#run-it-locally)
 - [Run with Docker](#run-with-docker)
+- [Deploy to AWS](#deploy-to-aws)
 - [Sample output](#sample-output)
 - [Configuration](#configuration)
 - [Setting up Amazon Bedrock](#setting-up-amazon-bedrock)
@@ -174,6 +175,28 @@ docker run --rm -p 8501:8501 --env-file .env ai-research-assistant
 ```
 
 The image installs only runtime dependencies from `uv.lock`, runs as a non-root user, and contains no `.env`, tests or git history.
+
+---
+
+## Deploy to AWS
+
+The app runs on ECS Fargate behind an Application Load Balancer in `us-east-1` ([spec 003](specs/003-aws-deployment/requirements.md)). The Groq and Tavily keys live in Secrets Manager, Bedrock access comes from the task's IAM role, and GitHub Actions deploys through OIDC, so no AWS keys are stored in the image, the repository or GitHub. It costs about $1.70 a day ([estimate](specs/003-aws-deployment/cost.md)).
+
+The infrastructure is Terraform in [`infra/terraform/`](infra/terraform). First deploy, from a machine with the AWS CLI, Docker, Terraform 1.6 or later and a filled-in `.env`:
+
+```bash
+BUDGET_EMAIL=you@example.com infra/deploy.sh
+```
+
+The script creates the ECR repository and the secret, writes the keys from `.env` into the secret, builds and pushes the image, applies the rest of the Terraform and prints the app URL. Set `CERTIFICATE_ARN` as well to serve HTTPS on your own domain. Terraform state stays in `infra/terraform/` on that machine.
+
+After that, set the repository variable `AWS_DEPLOY_ROLE_ARN` to the `deploy_role_arn` output. Every push to `main` that passes CI is then rolled out by [`deploy.yml`](.github/workflows/deploy.yml). To scale out, set `desired_count` in `infra/terraform/terraform.tfvars` and run the script again.
+
+To remove everything:
+
+```bash
+infra/teardown.sh
+```
 
 ---
 
