@@ -18,6 +18,7 @@ The brief contains a **summary**, **up to two competitors**, **key observations*
 ## Contents
 
 - [How it works](#how-it-works)
+- [Screenshots](#screenshots)
 - [What you need](#what-you-need)
 - [Run it locally](#run-it-locally)
 - [Run with Docker](#run-with-docker)
@@ -61,6 +62,34 @@ Every handoff passes a single Pydantic object, `ResearchState`, holding the quer
 **Choose your model.** A picker in the sidebar switches between **Claude on Amazon Bedrock** and **Groq**. Groq appears only when at least one Groq key is configured.
 
 **Key rotation for Groq.** Several Groq keys can be configured. On HTTP 429 (too many requests) the client switches to the next key at once, and only when every key is rate limited does it wait with back-off, honouring `retry-after`. On HTTP 401 or 403 (invalid or forbidden key) that key is disabled for the session and the next key is used, with no waiting.
+
+## Screenshots
+
+Taken from a live run with Claude on Amazon Bedrock and Tavily search.
+
+**Start page.** Pick the model in the sidebar, type a request or try an example.
+
+![Start page](docs/screenshots/01-landing.png)
+
+**Brief.** *"Analyze the food delivery market in Nepal"*: a summary, two local competitors, observations that cite findings, sources and missing information.
+
+![Brief tab](docs/screenshots/02-brief.png)
+
+**Evidence.** Every finding, whether it was cited, whether it is about the focus, and whether it came from the full page or a search snippet.
+
+![Evidence tab](docs/screenshots/03-evidence.png)
+
+**Quality.** Citation coverage, findings about the focus, source domains and the Critic's verdict, all measured in code.
+
+![Quality tab](docs/screenshots/04-quality.png)
+
+**Agent trace.** Each handoff between agents, in order, with how long it took.
+
+![Agent trace tab](docs/screenshots/05-trace.png)
+
+**Clarifying question.** *"Research Mercury"* is ambiguous, so the app asks which Mercury is meant and offers ready-to-run suggestions.
+
+![Clarifying question](docs/screenshots/06-clarify.png)
 
 ---
 
