@@ -35,13 +35,20 @@ def clean_evidence(text: str) -> str:
 
 
 def fallback_focus(query: str) -> list[str]:
-    """Capitalised names in the query, e.g. 'food delivery in Nepal' -> ['Nepal']."""
-    names = []
-    for group in re.findall(r"\b[A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*)*", query):
-        kept = [w for w in group.split() if w.lower() not in NOT_NAMES]
-        if kept:
-            names.append(" ".join(kept))
-    return names
+    """Capitalised names in the query, e.g. 'Food delivery in Nepal' -> ['Nepal'].
+
+    The first word is capitalised only because it starts the sentence, so it counts as
+    a name only when the query names nothing else ('Tesla market share' -> ['Tesla']).
+    """
+    groups = []
+    for match in re.finditer(r"\b[A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*)*", query):
+        words = [w for w in match.group().split() if w.lower() not in NOT_NAMES]
+        if words:
+            groups.append((match.start() == len(query) - len(query.lstrip()), words))
+    if len(groups) > 1 and groups[0][0]:
+        rest = groups[0][1][1:]
+        groups = ([(False, rest)] if rest else []) + groups[1:]
+    return [" ".join(words) for _, words in groups]
 
 
 def mentions_focus(texts: Iterable[str | None], focus: list[str]) -> bool:

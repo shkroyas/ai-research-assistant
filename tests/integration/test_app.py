@@ -66,6 +66,7 @@ def test_run_shows_metrics_and_all_result_tabs(chosen_providers) -> None:
     assert metrics["Model"] == "Claude"
     assert metrics["Critic"] == "Approved"
     assert metrics["Citation coverage"] == "50%"  # 2 of the 4 sample findings are cited
+    assert metrics["About Nepal"] == "4 / 4"  # every sample finding is about Nepal
 
     text = markdown_text(at)
     for section in ("Summary", "Competitors", "Key observations", "Sources", "Missing"):

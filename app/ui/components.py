@@ -7,7 +7,7 @@ import streamlit as st
 from market_research.models import ResearchState
 from market_research.quality import brief_citations
 from market_research.render import brief_to_markdown
-from ui.text import format_ms, link_citations
+from ui.text import format_ms, link_citations, short
 
 AGENTS = [
     ("Orchestrator", "Receives the query, runs the workflow and enforces the one-revision limit."),
@@ -123,6 +123,7 @@ def evidence_tab(state: ResearchState) -> None:
         {
             "ID": f.id,
             "Cited": f.id in cited,
+            "On focus": f.on_focus,
             "Evidence": f.claim,
             "Source": f.source_title,
             "Domain": f.domain or "-",
@@ -131,6 +132,11 @@ def evidence_tab(state: ResearchState) -> None:
         }
         for f in state.findings
     ]
+    if state.focus:
+        st.caption(
+            f"Focus: **{', '.join(state.focus)}**. Findings that do not mention it are kept as "
+            "background only."
+        )
     st.caption(
         "Raw evidence passed to the Analyst. *Scraped page* means the passage was read from the "
         "source page itself; *search snippet* means the page could not be used."
@@ -142,6 +148,7 @@ def evidence_tab(state: ResearchState) -> None:
         column_config={
             "ID": st.column_config.TextColumn(width="small"),
             "Cited": st.column_config.CheckboxColumn(width="small"),
+            "On focus": st.column_config.CheckboxColumn(width="small"),
             "Evidence": st.column_config.TextColumn(width="large"),
             "Source": st.column_config.TextColumn(width="medium"),
             "Link": st.column_config.LinkColumn(display_text="open", width="small"),
@@ -161,11 +168,17 @@ def quality_tab(state: ResearchState) -> None:
     if q is not None:
         st.markdown("**Evidence quality** (measured in code)")
         st.progress(q.citation_coverage, text=f"Citation coverage: {q.citation_coverage:.0%}")
-        cols = st.columns(4)
+        cols = st.columns(5)
         cols[0].metric("Findings cited", f"{q.cited} / {q.findings}")
-        cols[1].metric("Source domains", len(q.domains))
-        cols[2].metric("Full pages read", q.scraped_pages)
-        cols[3].metric("Snippets used", q.search_snippets + q.sample_findings)
+        focus_label = f"About {short(', '.join(q.focus), 18)}" if q.focus else "On focus"
+        cols[1].metric(
+            focus_label,
+            f"{q.on_focus} / {q.findings}",
+            help="Findings that name the market or company asked about",
+        )
+        cols[2].metric("Source domains", len(q.domains))
+        cols[3].metric("Full pages read", q.scraped_pages)
+        cols[4].metric("Snippets used", q.search_snippets + q.sample_findings)
         if q.domains:
             st.caption("Domains: " + ", ".join(q.domains))
         if q.grounding_problems:

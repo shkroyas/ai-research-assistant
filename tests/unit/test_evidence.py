@@ -36,8 +36,10 @@ def test_clean_evidence_can_leave_nothing() -> None:
     ("query", "focus"),
     [
         ("Analyze the food delivery market in Nepal", ["Nepal"]),
-        ("Electric vehicle market in India", ["Electric", "India"]),
+        ("Electric vehicle market in India", ["India"]),
+        ("Food delivery in Nepal", ["Nepal"]),
         ("Research Tesla", ["Tesla"]),
+        ("Tesla market share", ["Tesla"]),
         ("fintech wallets", []),
     ],
 )

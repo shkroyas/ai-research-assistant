@@ -38,3 +38,19 @@ Live runs of *"Analyze the food delivery market in Nepal"* (22 Nov 2026) showed 
 ### R5 Tests
 
 - **R5.1** Offline tests cover focus detection, query completion, ranking with the background cap, text cleaning, the new grounding rules and the quality count.
+
+## Traceability
+
+| Criterion | Code | Tests |
+| --- | --- | --- |
+| R1.1 | `Researcher.plan`, `evidence.fallback_focus` | `test_fallback_focus_takes_capitalised_names`, `test_researcher_ranks_focus_first_and_drops_masked_results` |
+| R1.2 | `evidence.ensure_focus` | `test_ensure_focus_appends_missing_focus`, `test_researcher_numbers_findings_and_dedupes` |
+| R1.3 | `evidence.mentions_focus`, `evidence.rank_results` | `test_mentions_focus_is_whole_word_and_case_insensitive`, `test_rank_results_puts_focus_first_and_caps_background` |
+| R1.4 | `analyst.format_findings`, `analyst.focus_line` | `test_analyst_prompt_names_focus_and_labels_background` |
+| R2.1, R2.2 | `evidence.clean_evidence`, `Researcher.run` | `test_clean_evidence_drops_masked_sentences`, `test_clean_evidence_strips_tables_headings_and_symbols`, `test_clean_evidence_can_leave_nothing` |
+| R2.3 | `scraper.best_passage` | `test_best_passage_prefers_focus_and_skips_masked_figures` |
+| R3.1, R3.2 | `prompts.ANALYST_SYSTEM`, `prompts.CRITIC_SYSTEM` | `test_analyst_prompt_names_focus_and_labels_background` |
+| R3.3 | `grounding.check_grounding` | `test_masked_figures_are_flagged`, `test_competitor_backed_only_by_background_is_flagged` |
+| R4.1 | `quality.assess`, `ui.components.evidence_tab`, `ui.components.quality_tab` | `test_assess_counts_findings_about_the_focus`, `test_run_shows_metrics_and_all_result_tabs` |
+| R5.1 | all of the above | `tests/unit`, `tests/integration` |
+

@@ -59,3 +59,11 @@ def test_orchestrator_records_step_durations_and_quality(search_results, good_br
     assert state.duration_ms is not None and state.duration_ms >= 0
     assert state.quality is not None and state.quality.citation_coverage == 1.0
     assert state.trace[-1].detail["citation_coverage"] == 1.0
+
+
+def test_assess_counts_findings_about_the_focus() -> None:
+    items = findings()
+    items[1].on_focus = False
+    state = ResearchState(query="q", findings=items, focus=["Nepal"])
+    report = assess(state)
+    assert (report.on_focus, report.focus) == (3, ["Nepal"])

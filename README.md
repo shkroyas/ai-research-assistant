@@ -50,9 +50,11 @@ Every handoff passes a single Pydantic object, `ResearchState`, holding the quer
 
 **Reads the sources, not just the snippets.** After searching, the Researcher fetches each result page in parallel. It checks `robots.txt` first, uses a timeout and a size limit, strips navigation and other boilerplate, and keeps the passage most relevant to the query. If a page cannot be read, the search snippet is kept and the reason is shown in the app.
 
-**Evidence first.** The Researcher numbers every finding (`F1`, `F2`, ...). The Analyst may only cite those ids. Plain code (`grounding.py`) then flags uncited observations, invented citations and competitors with no supporting finding, and the Critic sees those flags.
+**Stays on the market you asked about.** The Researcher first names the query's focus (for example *Nepal*, with local names such as *Kathmandu*), makes every search include it, and ranks results that mention it first. At most three general results are kept, marked as background, so a brief about Nepal is not built on global figures or on DoorDash and Uber Eats. Redacted figures such as `US$ ****` and table noise are removed from the evidence before the Analyst sees it.
 
-**Quality you can see.** Each run ends with a quality report computed in code: citation coverage, distinct source domains, how many findings came from full pages, and any remaining citation problems. Every agent step is timed.
+**Evidence first.** The Researcher numbers every finding (`F1`, `F2`, ...). The Analyst may only cite those ids. Plain code (`grounding.py`) then flags uncited observations, invented citations competitors with no supporting finding, competitors backed only by background findings, and masked figures, and the Critic sees those flags.
+
+**Quality you can see.** Each run ends with a quality report computed in code: citation coverage, how many findings are about the focus, distinct source domains, how many findings came from full pages, and any remaining citation problems. Every agent step is timed.
 
 **Choose your model.** A picker in the sidebar switches between **Claude on Amazon Bedrock** and **Groq**. Groq appears only when at least one Groq key is configured.
 
